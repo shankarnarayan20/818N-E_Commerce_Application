@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/vendor/autoload.php'; // Adjust the path if necessary
+require __DIR__ . '/../vendor/autoload.php'; // Adjust the path if necessary
 
 use Aws\Sdk;
 use Aws\Exception\AwsException;
