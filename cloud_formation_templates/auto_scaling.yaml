@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: EC2 Auto Scaling Template
+Description: Auto Scaling and Load Balancer for E-commerce Platform
 
 Parameters:
   VPCId:
@@ -19,7 +19,64 @@ Parameters:
     Type: String
     Default: t2.micro
 
+  S3BucketName:
+    Description: The name of the S3 bucket to be accessed by EC2 instances
+    Type: String
+
 Resources:
+  # IAM Role for EC2 instances
+  EC2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+
+  # IAM Policy for S3, RDS, and Secrets Manager access
+  EC2InstancePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: EC2InstancePolicy
+      Roles:
+        - !Ref EC2InstanceRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          # Allow read/write access to the specified S3 bucket
+          - Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetObject
+              - s3:PutObject
+            Resource:
+              - !Sub arn:aws:s3:::${S3BucketName}  # Bucket itself
+              - !Sub arn:aws:s3:::${S3BucketName}/*  # Bucket contents
+
+          # Allow access to Secrets Manager
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource: "*"  # Replace with your secret's ARN if needed
+          
+          # Allow RDS access (e.g., for monitoring)
+          - Effect: Allow
+            Action:
+              - rds:DescribeDBInstances
+              - rds:Connect
+            Resource: "*"
+
+  # Instance Profile to attach IAM Role to EC2
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EC2InstanceRole
+
+  # Security Group for EC2 Instances
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -29,12 +86,13 @@ Resources:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/0  # Allow HTTP access from anywhere
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/0  # Allow SSH access (restrict to specific IPs in production)
 
+  # Launch Configuration with IAM Role and Security Group
   LaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
@@ -43,7 +101,9 @@ Resources:
       KeyName: !Ref KeyName
       SecurityGroups:
         - !Ref EC2SecurityGroup
+      IamInstanceProfile: !Ref InstanceProfile
 
+  # Target Group for Load Balancer
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
@@ -51,7 +111,11 @@ Resources:
       Port: 80
       Protocol: HTTP
       TargetType: instance
+      HealthCheckProtocol: HTTP
+      HealthCheckPort: 80
+      HealthCheckPath: /
 
+  # Load Balancer to distribute traffic
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
@@ -60,6 +124,7 @@ Resources:
       SecurityGroups:
         - !Ref EC2SecurityGroup
 
+  # Listener to route traffic to the Target Group
   Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
@@ -70,6 +135,7 @@ Resources:
         - Type: forward
           TargetGroupArn: !Ref TargetGroup
 
+  # Auto Scaling Group to manage EC2 instances
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
@@ -82,7 +148,22 @@ Resources:
       TargetGroupARNs:
         - !Ref TargetGroup
 
+  # Auto Scaling Policy to scale out based on CPU usage
+  ScaleUpPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AutoScalingGroupName: !Ref AutoScalingGroup
+      PolicyType: TargetTrackingScaling
+      TargetTrackingConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ASGAverageCPUUtilization
+        TargetValue: 50  # Scale up when CPU exceeds 50%
+
 Outputs:
   AutoScalingGroupId:
     Description: The ID of the Auto Scaling group
     Value: !Ref AutoScalingGroup
+
+  LoadBalancerDNSName:
+    Description: The DNS name of the load balancer
+    Value: !GetAtt LoadBalancer.DNSName
