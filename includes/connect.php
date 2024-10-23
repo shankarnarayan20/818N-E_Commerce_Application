@@ -27,7 +27,7 @@ function createDatabaseConnection() {
         // Decode the secret JSON string into an array
         if (isset($result['SecretString'])) {
             $secret = json_decode($result['SecretString'], true);
-            
+
             // Access your database credentials from the secret
             $host = $secret['DB_HOST'];
             $username = $secret['DB_USER'];
@@ -57,13 +57,6 @@ function createDatabaseConnection() {
 
 // Example usage
 $con = createDatabaseConnection();
-if ($con) {
-    echo "Connected successfully";
-    // You can now use $con to interact with your database
+if (!$con) {
+    throw new Exception('Unable to establish a connection with the database');
 }
-
-// Close the connection when done
-if ($con) {
-    $con->close();
-}
-?>
