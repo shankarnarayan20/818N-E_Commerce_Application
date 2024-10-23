@@ -5,10 +5,18 @@ Parameters:
   VPCId:
     Type: String
     Description: The VPC ID where the resources will be deployed.
+    Default: vpc-0f688e20beeea151e
 
-  PublicSubnetId:
+  PublicSubnetId1:
     Type: String
     Description: The public subnet ID for EC2 instances.
+    Default: subnet-0cc8916a0c9660e27 
+  
+  PublicSubnetId2:
+    Type: String
+    Description: The public subnet ID for EC2 instances.
+    Default: subnet-0defe66feecf2c170
+
 
   KeyName:
     Description: Name of an existing EC2 KeyPair
@@ -19,62 +27,62 @@ Parameters:
     Type: String
     Default: t2.micro
 
-  S3BucketName:
-    Description: The name of the S3 bucket to be accessed by EC2 instances
-    Type: String
+  # S3BucketName:
+  #   Description: The name of the S3 bucket to be accessed by EC2 instances
+  #   Type: String
 
 Resources:
   # IAM Role for EC2 instances
-  EC2InstanceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ec2.amazonaws.com
-            Action: sts:AssumeRole
+  # EC2InstanceRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Service: ec2.amazonaws.com
+  #           Action: sts:AssumeRole
 
   # IAM Policy for S3, RDS, and Secrets Manager access
-  EC2InstancePolicy:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: EC2InstancePolicy
-      Roles:
-        - !Ref EC2InstanceRole
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          # Allow read/write access to the specified S3 bucket
-          - Effect: Allow
-            Action:
-              - s3:ListBucket
-              - s3:GetObject
-              - s3:PutObject
-            Resource:
-              - !Sub arn:aws:s3:::${S3BucketName}  # Bucket itself
-              - !Sub arn:aws:s3:::${S3BucketName}/*  # Bucket contents
+  # EC2InstancePolicy:
+  #   Type: AWS::IAM::Policy
+  #   Properties:
+  #     PolicyName: EC2InstancePolicy
+  #     Roles:
+  #       - !Ref EC2InstanceRole
+  #     PolicyDocument:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #         # Allow read/write access to the specified S3 bucket
+  #         - Effect: Allow
+  #           Action:
+  #             - s3:ListBucket
+  #             - s3:GetObject
+  #             - s3:PutObject
+  #           Resource:
+  #             - !Sub arn:aws:s3:::${S3BucketName}  # Bucket itself
+  #             - !Sub arn:aws:s3:::${S3BucketName}/*  # Bucket contents
 
           # Allow access to Secrets Manager
-          - Effect: Allow
-            Action:
-              - secretsmanager:GetSecretValue
-            Resource: "*"  # Replace with your secret's ARN if needed
+          # - Effect: Allow
+          #   Action:
+          #     - secretsmanager:GetSecretValue
+          #   Resource: "*"  # Replace with your secret's ARN if needed
           
-          # Allow RDS access (e.g., for monitoring)
-          - Effect: Allow
-            Action:
-              - rds:DescribeDBInstances
-              - rds:Connect
-            Resource: "*"
+          # # Allow RDS access (e.g., for monitoring)
+          # - Effect: Allow
+          #   Action:
+          #     - rds:DescribeDBInstances
+          #     - rds:Connect
+          #   Resource: "*"
 
-  # Instance Profile to attach IAM Role to EC2
-  InstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      Roles:
-        - !Ref EC2InstanceRole
+  # # Instance Profile to attach IAM Role to EC2
+  # InstanceProfile:
+  #   Type: AWS::IAM::InstanceProfile
+  #   Properties:
+  #     Roles:
+  #       - !Ref EC2InstanceRole
 
   # Security Group for EC2 Instances
   EC2SecurityGroup:
@@ -93,15 +101,18 @@ Resources:
           CidrIp: 0.0.0.0/0  # Allow SSH access (restrict to specific IPs in production)
 
   # Launch Configuration with IAM Role and Security Group
-  LaunchConfiguration:
-    Type: AWS::AutoScaling::LaunchConfiguration
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
     Properties:
-      ImageId: ami-0c55b159cbfafe1f0  # Choose an appropriate AMI
-      InstanceType: !Ref InstanceType
-      KeyName: !Ref KeyName
-      SecurityGroups:
-        - !Ref EC2SecurityGroup
-      IamInstanceProfile: !Ref InstanceProfile
+      LaunchTemplateName: MyLaunchTemplate
+      LaunchTemplateData:
+        ImageId: ami-0b27ebcf010a33f1c  # Choose an appropriate AMI
+        InstanceType: !Ref InstanceType
+        KeyName: !Ref KeyName
+        SecurityGroupIds:
+          - !Ref EC2SecurityGroup
+        IamInstanceProfile:
+          Arn: arn:aws:iam::156041403412:instance-profile/Midterm-ec2-role  # Use the ARN of the existing instance profile
 
   # Target Group for Load Balancer
   TargetGroup:
@@ -120,7 +131,8 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Subnets:
-        - !Ref PublicSubnetId
+        - !Ref PublicSubnetId1
+        - !Ref PublicSubnetId2
       SecurityGroups:
         - !Ref EC2SecurityGroup
 
@@ -140,10 +152,13 @@ Resources:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       VPCZoneIdentifier:
-        - !Ref PublicSubnetId
-      LaunchConfigurationName: !Ref LaunchConfiguration
+        - !Ref PublicSubnetId1
+        - !Ref PublicSubnetId2
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
       MinSize: 1
-      MaxSize: 3
+      MaxSize: 2
       DesiredCapacity: 1
       TargetGroupARNs:
         - !Ref TargetGroup
