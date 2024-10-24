@@ -54,12 +54,15 @@ ul {
 .text-1 {
     color: #7D8184;
 }
+
 .text-2 {
     color: #DB4444;
 }
+
 .text-3 {
     color: #212529 !important;
 }
+
 .text-dark {
     --bs-text-opacity: 1;
     color: rgba(var(--bs-darkk-rgb), var(--bs-text-opacity)) !important;
@@ -97,6 +100,7 @@ ul {
     -ms-border-radius: 4px;
     -o-border-radius: 4px;
 }
+
 .shape {
     display: inline-block;
     width: 18px;
@@ -164,6 +168,7 @@ ul {
     -ms-border-radius: 0px 0px 0px 4px;
     -o-border-radius: 0px 0px 0px 4px;
 }
+
 .one-card .photo button:nth-child(3) {
     background-color: #DB4444;
     border-radius: 0px 0px 4px 0px;
@@ -173,6 +178,7 @@ ul {
     -ms-border-radius: 0px 0px 4px 0px;
     -o-border-radius: 0px 0px 4px 0px;
 }
+
 .one-card .photo:hover button {
     bottom: 0px;
 }
@@ -276,11 +282,13 @@ ul {
     }
 
 }
-.landing img.img-thumbnail{
+
+.landing img.img-thumbnail {
     /* width: 50px; */
     height: 80px;
     object-fit: contain;
 }
+
 /* End Landing Section  */
 /* Start Category Section  */
 .category {
@@ -501,25 +509,27 @@ ul {
     -ms-border-radius: 4px;
     -o-border-radius: 4px;
 }
+
 /* End Products Section  */
 /*  **********************
     **** products.php ****
     **********************
 */
-.all-prod .container .sub-container .side-nav a{
+.all-prod .container .sub-container .side-nav a {
     padding: 8px 10px;
 }
+
 /*  **************************
     **** /Admin/index.php ****
     **************************
 */
-.control .container .row .admin-image{
+.control .container .row .admin-image {
     width: 80%;
     background-color: #F5F5F5;
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap:18px;
+    gap: 18px;
     align-items: center;
     border-radius: 8px;
     -webkit-border-radius: 8px;
@@ -527,18 +537,22 @@ ul {
     -ms-border-radius: 8px;
     -o-border-radius: 8px;
 }
+
 @media (max-width:767px) {
-    .control .container .row .admin-image{
+    .control .container .row .admin-image {
         margin: 0px auto;
     }
-    .control .container .row.align-items-center{
+
+    .control .container .row.align-items-center {
         text-align: center;
     }
 }
-.control .container .row .admin-image img{
+
+.control .container .row .admin-image img {
     width: 100%;
 }
-.control .container .row .buttons a.nav-link{
+
+.control .container .row .buttons a.nav-link {
     transition: 0s;
     -webkit-transition: 0s;
     -moz-transition: 0s;
@@ -547,26 +561,31 @@ ul {
 }
 
 /* Start Product Details  */
-.prod-details{
+.prod-details {
     margin-bottom: 50px;
 }
-.prod-details .prod-imgs{
+
+.prod-details .prod-imgs {
     display: flex;
     flex-direction: column;
     gap: 18px;
 }
-.prod-details .prod-imgs img{
+
+.prod-details .prod-imgs img {
     width: 100%;
 }
+
 @media (max-width:767px) {
-.prod-details .prod-imgs{
-    flex-direction: row;
-    justify-content: center;
+    .prod-details .prod-imgs {
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .prod-details .prod-imgs img {
+        width: 20%;
+    }
 }
-.prod-details .prod-imgs img{
-    width: 20%;
-}
-}
+
 .prod-details .main-img {
     display: flex;
     background-color: #eaeaea;
@@ -575,28 +594,34 @@ ul {
     width: 100%;
     height: 100%;
 }
-.prod-details .main-img img{
+
+.prod-details .main-img img {
     width: 100%;
 }
-.in-stack{
+
+.in-stack {
     color: #00FF66;
 }
-.out-stack{
+
+.out-stack {
     color: #DB4444;
 }
+
 .prod-details .buy-item .num-btns .btn-increase,
-.prod-details .buy-item .num-btns .btn-decrease{
+.prod-details .buy-item .num-btns .btn-decrease {
     font-size: 18px;
     font-weight: bold;
     border: 1px solid rgba(0, 0, 0, 0.5);
 }
+
 .prod-details .buy-item .num-btns .btn-increase:hover,
-.prod-details .buy-item .num-btns .btn-decrease:hover{
+.prod-details .buy-item .num-btns .btn-decrease:hover {
     background-color: #DB4444;
     color: #ffffff;
     border: none;
 }
-.prod-details .buy-item .num-btns .form-control{
+
+.prod-details .buy-item .num-btns .form-control {
     font-size: 18px;
     font-weight: bold;
 }
@@ -609,23 +634,28 @@ ul {
     -ms-border-radius: 8px;
     -o-border-radius: 8px;
 }
+
 /* End Product Details  */
 /* Start profile  */
-.navbar-profile{
+.navbar-profile {
     background-color: #F5F5F5;
     padding: 10px;
     gap: 15px;
 }
-.img-profile{
-    width:100%;
+
+.img-profile {
+    width: 100%;
 }
-li.table-group-divider ,
+
+li.table-group-divider,
 .table-group-divider {
     border-color: #d8d8d8;
 }
+
 td {
     vertical-align: middle;
 }
+
 /* End profile  */
 /* Start Admin register & login  */
 .admin-register{

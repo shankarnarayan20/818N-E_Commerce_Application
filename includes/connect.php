@@ -17,7 +17,7 @@ function createDatabaseConnection() {
         $secretsManager = $sdk->createSecretsManager();
 
         // Your secret name
-        $secretName = 'MyDatabaseCredentials';
+        $secretName = 'localmysql';
 
         // Retrieve the secret
         $result = $secretsManager->getSecretValue([
@@ -34,6 +34,7 @@ function createDatabaseConnection() {
             $password = $secret['DB_PASS'];
             $db_name = $secret['DB_NAME'];
             $port = $secret['DB_PORT'];
+            $cdn_url = $secret['CDN_URL'];
 
             // Create a new mysqli connection
             $con = new mysqli($host, $username, $password, $db_name, $port);
@@ -43,7 +44,7 @@ function createDatabaseConnection() {
                 die("Connection failed: " . $con->connect_error);
             }
 
-            return $con; // Return the connection object
+            return [$con, $cdn_url]; // Return the connection object
         }
     } catch (AwsException $e) {
         // Output error message if fails
@@ -56,7 +57,8 @@ function createDatabaseConnection() {
 }
 
 // Example usage
-$con = createDatabaseConnection();
+[$con, $cdn_url] = createDatabaseConnection();
+
 if (!$con) {
     throw new Exception('Unable to establish a connection with the database');
 }

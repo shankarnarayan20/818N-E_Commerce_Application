@@ -10,8 +10,9 @@ session_start();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ecommerce Products</title>
-    <link rel="stylesheet" href="./assets/css/bootstrap.css" />
-    <link rel="stylesheet" href="./assets/css/main.css" />
+    <?php global $cdn_url; ?>
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css";?>/>
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css";?>/>
 </head>
 
 <body>
@@ -208,7 +209,7 @@ session_start();
     </div> -->
     <!-- End Footer -->
 
-    <script src="./assets//js/bootstrap.bundle.js"></script>
+    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>></script>
 </body>
 
 </html>
