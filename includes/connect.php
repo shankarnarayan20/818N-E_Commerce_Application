@@ -17,7 +17,7 @@ function createDatabaseConnection() {
         $secretsManager = $sdk->createSecretsManager();
 
         // Your secret name
-        $secretName = 'localmysql';
+        $secretName = 'MyDatabaseCredentials';
 
         // Retrieve the secret
         $result = $secretsManager->getSecretValue([
