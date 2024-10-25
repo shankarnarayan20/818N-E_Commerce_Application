@@ -21,6 +21,23 @@ Resources:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
 
+  # CloudWatch Log Group for VPC Flow Logs
+  VPCFlowLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/vpc/flowlogs
+      RetentionInDays: 7
+
+  # VPC Flow Logs
+  VPCFlowLogs:
+    Type: AWS::EC2::FlowLog
+    Properties:
+      DeliverLogsPermissionArn: arn:aws:iam::156041403412:role/Midterm-ec2-role
+      LogGroupName: !Ref VPCFlowLogGroup
+      ResourceId: !Ref VPC
+      ResourceType: VPC
+      TrafficType: ALL
+
   # Public Subnet 1
   PublicSubnet1:
     Type: AWS::EC2::Subnet

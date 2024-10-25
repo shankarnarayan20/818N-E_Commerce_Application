@@ -32,57 +32,7 @@ Parameters:
   #   Type: String
 
 Resources:
-  # IAM Role for EC2 instances
-  # EC2InstanceRole:
-  #   Type: AWS::IAM::Role
-  #   Properties:
-  #     AssumeRolePolicyDocument:
-  #       Version: '2012-10-17'
-  #       Statement:
-  #         - Effect: Allow
-  #           Principal:
-  #             Service: ec2.amazonaws.com
-  #           Action: sts:AssumeRole
 
-  # IAM Policy for S3, RDS, and Secrets Manager access
-  # EC2InstancePolicy:
-  #   Type: AWS::IAM::Policy
-  #   Properties:
-  #     PolicyName: EC2InstancePolicy
-  #     Roles:
-  #       - !Ref EC2InstanceRole
-  #     PolicyDocument:
-  #       Version: '2012-10-17'
-  #       Statement:
-  #         # Allow read/write access to the specified S3 bucket
-  #         - Effect: Allow
-  #           Action:
-  #             - s3:ListBucket
-  #             - s3:GetObject
-  #             - s3:PutObject
-  #           Resource:
-  #             - !Sub arn:aws:s3:::${S3BucketName}  # Bucket itself
-  #             - !Sub arn:aws:s3:::${S3BucketName}/*  # Bucket contents
-
-          # Allow access to Secrets Manager
-          # - Effect: Allow
-          #   Action:
-          #     - secretsmanager:GetSecretValue
-          #   Resource: "*"  # Replace with your secret's ARN if needed
-          
-          # # Allow RDS access (e.g., for monitoring)
-          # - Effect: Allow
-          #   Action:
-          #     - rds:DescribeDBInstances
-          #     - rds:Connect
-          #   Resource: "*"
-
-  # # Instance Profile to attach IAM Role to EC2
-  # InstanceProfile:
-  #   Type: AWS::IAM::InstanceProfile
-  #   Properties:
-  #     Roles:
-  #       - !Ref EC2InstanceRole
 
   # Security Group for EC2 Instances
   EC2SecurityGroup:
@@ -92,13 +42,25 @@ Resources:
       VpcId: !Ref VPCId
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
+          FromPort: 443
+          ToPort: 443
           CidrIp: 0.0.0.0/0  # Allow HTTP access from anywhere
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
           CidrIp: 0.0.0.0/0  # Allow SSH access (restrict to specific IPs in production)
+
+  EC2RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable Egress MySQL access
+      VpcId: !Ref VPCId
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 10.0.0.0/16  # Allow HTTP access from anywhere
+
 
   # Launch Configuration with IAM Role and Security Group
   LaunchTemplate:
@@ -106,24 +68,36 @@ Resources:
     Properties:
       LaunchTemplateName: MyLaunchTemplate
       LaunchTemplateData:
-        ImageId: ami-0b27ebcf010a33f1c  # Choose an appropriate AMI
+        ImageId: ami-066e50926fb9d17a7  # Choose an appropriate AMI
         InstanceType: !Ref InstanceType
         KeyName: !Ref KeyName
         SecurityGroupIds:
           - !Ref EC2SecurityGroup
+          - !Ref EC2RDSSecurityGroup
         IamInstanceProfile:
           Arn: arn:aws:iam::156041403412:instance-profile/Midterm-ec2-role  # Use the ARN of the existing instance profile
+        UserData:
+          Fn::Base64: |
+            #!/bin/bash
+            cd /var/www/html
+            sudo rm -fr ./*
+            cd ~
+            git clone https://github.com/shankarnarayan20/818N-E_Commerce_Application.git midterm
+            sudo mv midterm/* /var/www/html
+            rm -fr midterm
+            cd /var/www/html
+            composer update --no-interaction --allow-root
 
   # Target Group for Load Balancer
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       VpcId: !Ref VPCId
-      Port: 80
-      Protocol: HTTP
+      Port: 443
+      Protocol: HTTPS
       TargetType: instance
-      HealthCheckProtocol: HTTP
-      HealthCheckPort: 80
+      HealthCheckProtocol: HTTPS
+      HealthCheckPort: 443
       HealthCheckPath: /
 
   # Load Balancer to distribute traffic
@@ -141,8 +115,11 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       LoadBalancerArn: !Ref LoadBalancer
-      Port: 80
-      Protocol: HTTP
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-2016-08
+      Certificates:
+        - CertificateArn: arn:aws:acm:us-east-1:156041403412:certificate/ffc414a1-e796-44e1-b425-22ae9da4a3a0
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref TargetGroup
@@ -163,16 +140,72 @@ Resources:
       TargetGroupARNs:
         - !Ref TargetGroup
 
-  # Auto Scaling Policy to scale out based on CPU usage
+  # CloudWatch Log Group for EC2 Instances
+  CloudWatchLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/ec2/ecommerce-application
+      RetentionInDays: 7  # Optional: Retain logs for 14 days
+
+  # CloudWatch Alarm for High CPU Usage
+  HighCPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: "Alarm if CPU usage exceeds 80%"
+      Namespace: AWS/EC2
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref AutoScalingGroup
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref ScaleUpPolicy
+
+  # CloudWatch Alarm for Low CPU Usage
+  LowCPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: "Alarm if CPU usage drops below 20%"
+      Namespace: AWS/EC2
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref AutoScalingGroup
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 20
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Ref ScaleDownPolicy
+
+  # Step Scaling Policy to Scale Up
   ScaleUpPolicy:
     Type: AWS::AutoScaling::ScalingPolicy
     Properties:
       AutoScalingGroupName: !Ref AutoScalingGroup
-      PolicyType: TargetTrackingScaling
-      TargetTrackingConfiguration:
-        PredefinedMetricSpecification:
-          PredefinedMetricType: ASGAverageCPUUtilization
-        TargetValue: 50  # Scale up when CPU exceeds 50%
+      PolicyType: StepScaling
+      AdjustmentType: ChangeInCapacity
+      StepAdjustments:
+        - MetricIntervalLowerBound: 0
+          ScalingAdjustment: 1
+      Cooldown: 300
+
+  # Step Scaling Policy to Scale Down
+  ScaleDownPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AutoScalingGroupName: !Ref AutoScalingGroup
+      PolicyType: StepScaling
+      AdjustmentType: ChangeInCapacity
+      StepAdjustments:
+        - MetricIntervalUpperBound: 0
+          ScalingAdjustment: -1
+      Cooldown: 300
 
 Outputs:
   AutoScalingGroupId:
