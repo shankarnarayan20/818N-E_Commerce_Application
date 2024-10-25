@@ -26,6 +26,11 @@ Parameters:
     Description: EC2 instance type
     Type: String
     Default: t2.micro
+  
+  RDSSecurityGroup:
+    Description: RDS Security Group
+    Type: AWS::EC2::SecurityGroup
+    Default: sg-0284bbe2dff6726bd
 
   # S3BucketName:
   #   Description: The name of the S3 bucket to be accessed by EC2 instances
@@ -59,7 +64,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 3306
           ToPort: 3306
-          CidrIp: 10.0.0.0/16  # Allow HTTP access from anywhere
+          DestinationSecurityGroupId: !Ref RDSSecurityGroup  # Allow HTTP access from anywhere
 
 
   # Launch Configuration with IAM Role and Security Group
@@ -86,7 +91,8 @@ Resources:
             sudo mv midterm/* /var/www/html
             rm -fr midterm
             cd /var/www/html
-            composer update --no-interaction --allow-root
+            export COMPOSER_ALLOW_SUPERUSER=1
+            sudo composer install --no-interaction 
 
   # Target Group for Load Balancer
   TargetGroup:

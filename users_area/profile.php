@@ -2,7 +2,7 @@
 include("../includes/connect.php");
 include("../functions/common_functions.php");
 session_start();
-if(!isset($_SESSION['username'])){
+if (!isset($_SESSION['username'])) {
     header('location:user_login.php');
 }
 ?>
@@ -12,10 +12,10 @@ if(!isset($_SESSION['username'])){
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $_SESSION['username'];?> Profile</title>
+    <title><?php echo $_SESSION['username']; ?> Profile</title>
     <?php global $cdn_url; ?>
-    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css";?>/>
-    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css";?>/>
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css"; ?> />
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css"; ?> />
 </head>
 
 <body>
@@ -46,7 +46,7 @@ if(!isset($_SESSION['username'])){
                         <a class="nav-link" href="">Contact</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active"  aria-current="page" href="profile.php">My Account</a>
+                        <a class="nav-link active" aria-current="page" href="profile.php">My Account</a>
                     </li>
                 </ul>
                 <form class="d-flex" action="../search_product.php">
@@ -67,7 +67,7 @@ if(!isset($_SESSION['username'])){
                                 ?>
                             </sup>
                             <span class="d-none">
-                                Total Price is: 
+                                Total Price is:
                                 <?php
                                 total_cart_price();
                                 ?>
@@ -81,25 +81,25 @@ if(!isset($_SESSION['username'])){
                                 <path d="M16.5 14C18.9853 14 21 11.9853 21 9.5C21 7.01472 18.9853 5 16.5 5C14.0147 5 12 7.01472 12 9.5C12 11.9853 14.0147 14 16.5 14Z" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                             <?php
-                                if(!isset($_SESSION['username'])){
-                                    echo "<span>
+                            if (!isset($_SESSION['username'])) {
+                                echo "<span>
                                     Welcome guest
                                 </span>";
-                            }else{
-                                    echo "<span>
-                                    Welcome ".$_SESSION['username']. "</span>";
-                                }
-                                ?>
+                            } else {
+                                echo "<span>
+                                    Welcome " . $_SESSION['username'] . "</span>";
+                            }
+                            ?>
                         </a>
                     </li>
                     <?php
-                    if(!isset($_SESSION['username'])){
+                    if (!isset($_SESSION['username'])) {
                         echo "<li class='nav-item'>
                         <a class='nav-link' href='./users_area/user_login.php'>
                             Login
                         </a>
                     </li>";
-                }else{
+                    } else {
                         echo "<li class='nav-item'>
                         <a class='nav-link' href='./logout.php'>
                             Logout
@@ -131,12 +131,12 @@ if(!isset($_SESSION['username'])){
                         <!-- Profile Tabs -->
                         <ul class="navbar-nav me-auto navbar-profile">
                             <?php
-                                $username = $_SESSION['username'];
-                                $select_user_img = "SELECT * FROM `user_table` WHERE username='$username'";
-                                $select_user_img_result = mysqli_query($con,$select_user_img);
-                                $row_user_img = mysqli_fetch_array($select_user_img_result);
-                                $userImg = $row_user_img['user_image'];
-                                echo "                            <li class='nav-item d-flex align-items-center gap-2'>
+                            $username = $_SESSION['username'];
+                            $select_user_img = "SELECT * FROM `user_table` WHERE username='$username'";
+                            $select_user_img_result = mysqli_query($con, $select_user_img);
+                            $row_user_img = mysqli_fetch_array($select_user_img_result);
+                            $userImg = $row_user_img['user_image'];
+                            echo "                            <li class='nav-item d-flex align-items-center gap-2'>
                                 <img src='./user_images/$userImg' alt='$username photo' class='img-profile img-thumbnail'/>
                             </li>";
                             ?>
@@ -175,16 +175,16 @@ if(!isset($_SESSION['username'])){
                         <!-- Main View  -->
                         <div class="row">
                             <?php
-                                get_user_order_details();
-                                if(isset($_GET['edit_account'])){
-                                    include('./edit_account.php');
-                                }
-                                if(isset($_GET['my_orders'])){
-                                    include('./user_orders.php');
-                                }
-                                if(isset($_GET['delete_account'])){
-                                    include('./delete_account.php');
-                                }
+                            get_user_order_details();
+                            if (isset($_GET['edit_account'])) {
+                                include('./edit_account.php');
+                            }
+                            if (isset($_GET['my_orders'])) {
+                                include('./user_orders.php');
+                            }
+                            if (isset($_GET['delete_account'])) {
+                                include('./delete_account.php');
+                            }
                             ?>
                         </div>
                     </div>
@@ -221,7 +221,9 @@ if(!isset($_SESSION['username'])){
     </div> -->
     <!-- End Footer -->
 
-    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>>></script>
+    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>>
+        >
+    </script>
 </body>
 
 </html>

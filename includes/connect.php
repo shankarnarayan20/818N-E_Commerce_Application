@@ -5,7 +5,8 @@ use Aws\Sdk;
 use Aws\Exception\AwsException;
 
 // Function to create a database connection
-function createDatabaseConnection() {
+function createDatabaseConnection()
+{
     try {
         // Create an AWS SDK instance
         $sdk = new Sdk([
@@ -17,7 +18,7 @@ function createDatabaseConnection() {
         $secretsManager = $sdk->createSecretsManager();
 
         // Your secret name
-        $secretName = 'MyDatabaseCredentials';
+        $secretName = 'localmysql';
 
         // Retrieve the secret
         $result = $secretsManager->getSecretValue([
@@ -34,7 +35,7 @@ function createDatabaseConnection() {
             $password = $secret['DB_PASS'];
             $db_name = $secret['DB_NAME'];
             $port = $secret['DB_PORT'];
-            $cdn_url = $secret['CDN_URL'];
+            $cdn_url = "";
 
             // Create a new mysqli connection
             $con = new mysqli($host, $username, $password, $db_name, $port);

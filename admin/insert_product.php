@@ -1,35 +1,35 @@
 <?php
 include('../includes/connect.php');
-if(isset($_POST['insert_product'])){
-    $product_title=$_POST['product_title'];
-    $product_description=$_POST['product_description'];
-    $product_keywords=$_POST['product_keywords'];
-    $product_category=$_POST['product_category'];
-    $product_brand=$_POST['product_brand'];
-    $product_price=$_POST['product_price'];
-    $product_status='true';
+if (isset($_POST['insert_product'])) {
+    $product_title = $_POST['product_title'];
+    $product_description = $_POST['product_description'];
+    $product_keywords = $_POST['product_keywords'];
+    $product_category = $_POST['product_category'];
+    $product_brand = $_POST['product_brand'];
+    $product_price = $_POST['product_price'];
+    $product_status = 'true';
     //access images
-    $product_image_one=$_FILES['product_image_one']['name'];
-    $product_image_two=$_FILES['product_image_two']['name'];
-    $product_image_three=$_FILES['product_image_three']['name'];
+    $product_image_one = $_FILES['product_image_one']['name'];
+    $product_image_two = $_FILES['product_image_two']['name'];
+    $product_image_three = $_FILES['product_image_three']['name'];
     //access images tmp name
-    $temp_image_one=$_FILES['product_image_one']['tmp_name'];
-    $temp_image_two=$_FILES['product_image_two']['tmp_name'];
-    $temp_image_three=$_FILES['product_image_three']['tmp_name'];
+    $temp_image_one = $_FILES['product_image_one']['tmp_name'];
+    $temp_image_two = $_FILES['product_image_two']['tmp_name'];
+    $temp_image_three = $_FILES['product_image_three']['tmp_name'];
     //checking empty condition
-    if($product_title == '' || $product_description == '' || $product_keywords == '' || $product_category == '' || $product_brand == '' || empty($product_price) || empty($product_image_one) || empty($product_image_two) || empty($product_image_three)){
+    if ($product_title == '' || $product_description == '' || $product_keywords == '' || $product_category == '' || $product_brand == '' || empty($product_price) || empty($product_image_one) || empty($product_image_two) || empty($product_image_three)) {
         echo "<script>alert(\"Fields should not be empty\");</script>";
         exit();
-    }else{
+    } else {
         //move folders
-        move_uploaded_file($temp_image_one,"./product_images/$product_image_one");
-        move_uploaded_file($temp_image_two,"./product_images/$product_image_two");
-        move_uploaded_file($temp_image_three,"./product_images/$product_image_three");
+        move_uploaded_file($temp_image_one, "./product_images/$product_image_one");
+        move_uploaded_file($temp_image_two, "./product_images/$product_image_two");
+        move_uploaded_file($temp_image_three, "./product_images/$product_image_three");
         //insert query in db
         $insert_query = "INSERT INTO `products` (product_title,product_description,product_keywords,category_id,brand_id,product_image_one,product_image_two,product_image_three,product_price,date,status) VALUES ('$product_title','$product_description','$product_keywords','$product_category','$product_brand','$product_image_one','$product_image_two','$product_image_three','$product_price',NOW(),'$product_status')";
-        $insert_result=mysqli_query($con,$insert_query);
-        if($insert_result){
-        echo "<script>alert(\"Product Inserted Successfully\");</script>";
+        $insert_result = mysqli_query($con, $insert_query);
+        if ($insert_result) {
+            echo "<script>alert(\"Product Inserted Successfully\");</script>";
         }
     }
 }
@@ -42,8 +42,8 @@ if(isset($_POST['insert_product'])){
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Insert Products - Admin Dashboard</title>
     <?php global $cdn_url; ?>
-    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css";?>/>
-    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css";?>/>
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css"; ?> />
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css"; ?> />
 </head>
 
 <body>
