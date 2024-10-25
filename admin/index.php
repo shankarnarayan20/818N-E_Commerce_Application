@@ -21,9 +21,7 @@ if (isset($_SESSION['admin_username'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ecommerce Admin Dashboard</title>
     <?php global $cdn_url; ?>
-    <!-- <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css"; ?>/> -->
     <link rel="stylesheet" href="https://d2jum7a74lodww.cloudfront.net/assets/css/bootstrap.css">
-    <!-- <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css"; ?>/> -->
     <link rel="stylesheet" href="https://d2jum7a74lodww.cloudfront.net/assets/css/main.css">
 </head>
 
@@ -183,7 +181,9 @@ if (isset($_SESSION['admin_username'])) {
     </div> -->
     <!-- End Footer -->
 
-    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>>></script>
+    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>>
+        >
+    </script>
 </body>
 
 </html>

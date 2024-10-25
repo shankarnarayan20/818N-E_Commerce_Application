@@ -11,8 +11,8 @@ session_start();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ecommerce Admin Login</title>
     <?php global $cdn_url; ?>
-    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css";?>/>
-    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css";?>/>
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css"; ?> />
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css"; ?> />
 </head>
 
 <body>
@@ -64,7 +64,9 @@ session_start();
     </div> -->
     <!-- End Footer -->
 
-    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>>></script>
+    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>>
+        >
+    </script>
 </body>
 
 </html>

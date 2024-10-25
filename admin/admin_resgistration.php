@@ -11,8 +11,8 @@ session_start();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ecommerce Admin Registration</title>
     <?php global $cdn_url; ?>
-    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css";?>/>
-    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css";?>/>
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css"; ?> />
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css"; ?> />
 </head>
 
 <body>
@@ -73,7 +73,9 @@ session_start();
     </div> -->
     <!-- End Footer -->
 
-    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>>></script>
+    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>>
+        >
+    </script>
 </body>
 
 </html>
@@ -83,7 +85,7 @@ if (isset($_POST['admin_register'])) {
     $username = $_POST['username'];
     $email = $_POST['email'];
     $password = $_POST['password'];
-    $hash_password = password_hash($password,PASSWORD_DEFAULT);
+    $hash_password = password_hash($password, PASSWORD_DEFAULT);
     $conf_password = $_POST['conf_password'];
     $image = $_FILES['admin_image']['name'];
     $image_tmp = $_FILES['admin_image']['tmp_name'];

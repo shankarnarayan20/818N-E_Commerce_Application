@@ -11,8 +11,8 @@ include('../functions/common_functions.php');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ecommerce User Registeration Page</title>
     <?php global $cdn_url; ?>
-    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css";?>/>
-    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css";?>/>
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css"; ?> />
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css"; ?> />
 </head>
 
 <body>
@@ -79,7 +79,7 @@ if (isset($_POST['user_register'])) {
     $user_username = $_POST['user_username'];
     $user_email = $_POST['user_email'];
     $user_password = $_POST['user_password'];
-    $hash_password = password_hash($user_password,PASSWORD_DEFAULT);
+    $hash_password = password_hash($user_password, PASSWORD_DEFAULT);
     $conf_user_password = $_POST['conf_user_password'];
     $user_address = $_POST['user_address'];
     $user_mobile = $_POST['user_mobile'];

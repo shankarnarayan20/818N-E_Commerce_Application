@@ -10,8 +10,8 @@ include('../functions/common_functions.php');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php global $cdn_url; ?>
-    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css";?>/>
-    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css";?>/>
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css"; ?> />
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css"; ?> />
 </head>
 
 <body>
@@ -108,16 +108,16 @@ include('../functions/common_functions.php');
         </div>
     </nav> -->
     <!-- End NavBar -->
-        <!-- php code to access user id  -->
-        <?php
-            $user_ip = getIPAddress();
-            $get_user_query = "SELECT * FROM `user_table` WHERE user_ip='$user_ip'";
-            $get_user_result = mysqli_query($con,$get_user_query);
-            $fetch_user = mysqli_fetch_array($get_user_result);
-            $user_id = $fetch_user['user_id'];
+    <!-- php code to access user id  -->
+    <?php
+    $user_ip = getIPAddress();
+    $get_user_query = "SELECT * FROM `user_table` WHERE user_ip='$user_ip'";
+    $get_user_result = mysqli_query($con, $get_user_query);
+    $fetch_user = mysqli_fetch_array($get_user_result);
+    $user_id = $fetch_user['user_id'];
 
-        ?>
-        <!-- php code to access user id  -->
+    ?>
+    <!-- php code to access user id  -->
     <!-- Start Landing Section -->
     <div class="landing">
         <div class="container">
@@ -146,7 +146,7 @@ include('../functions/common_functions.php');
                     </a>
                 </div>
                 <div class="col-md-6 d-flex justify-content-center align-items-center">
-                    <a href="order.php?user_id=<?php echo $user_id;?>" class="fs-1 fw-bold text-decoration-underline">
+                    <a href="order.php?user_id=<?php echo $user_id; ?>" class="fs-1 fw-bold text-decoration-underline">
                         Pay Cash
                     </a>
                 </div>
@@ -183,7 +183,9 @@ include('../functions/common_functions.php');
     </div> -->
     <!-- End Footer -->
 
-    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>>></script>
+    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>>
+        >
+    </script>
 </body>
 
 </html>

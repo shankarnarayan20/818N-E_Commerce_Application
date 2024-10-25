@@ -11,8 +11,8 @@ include('../includes/connect.php');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ecommerce Checkout Page</title>
     <?php global $cdn_url; ?>
-    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css";?>/>
-    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css";?>/>
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css"; ?> />
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css"; ?> />
 </head>
 
 <body>
@@ -83,13 +83,13 @@ include('../includes/connect.php');
                         </a>
                     </li>
                     <?php
-                    if(!isset($_SESSION['username'])){
+                    if (!isset($_SESSION['username'])) {
                         echo "<li class='nav-item'>
                         <a class='nav-link' href='./users_area/user_login.php'>
                             Login
                         </a>
                     </li>";
-                }else{
+                    } else {
                         echo "<li class='nav-item'>
                         <a class='nav-link' href='./users_area/logout.php'>
                             Logout
@@ -108,11 +108,11 @@ include('../includes/connect.php');
         <div class="container">
             <div class="row m-0">
                 <?php
-                    if(!isset($_SESSION['username'])){
-                        include('user_login.php');
-                    }else{
-                        include('payment.php');
-                    }
+                if (!isset($_SESSION['username'])) {
+                    include('user_login.php');
+                } else {
+                    include('payment.php');
+                }
                 ?>
             </div>
         </div>
@@ -147,7 +147,9 @@ include('../includes/connect.php');
     </div> -->
     <!-- End Footer -->
 
-    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>>></script>
+    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>>
+        >
+    </script>
 </body>
 
 </html>
