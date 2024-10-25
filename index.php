@@ -361,7 +361,7 @@ session_start();
     </div> -->
     <!-- End Footer -->
 
-    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>></script>
+    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?> ></script>
 </body>
 
 </html>

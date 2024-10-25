@@ -167,7 +167,7 @@ session_start();
                                         <td>
                                             <?php echo $product_title; ?>
                                         </td>
-                                        <td><img src="./admin/product_images/<?php echo $product_image_one; ?>" class="img-thumbnail" alt="<?php echo $product_title; ?>"></td>
+                                        <td><img src="<?php echo "$cdn_url/admin/product_images/$product_image_one"; ?>" class="img-thumbnail" alt="<?php echo $product_title; ?>"></td>
                                         <td>
                                             <input type="number" class="form-control w-50 mx-auto" min="1" name="qty_<?php echo $product_id; ?>">
                                         </td>
@@ -294,7 +294,7 @@ session_start();
     </div> -->
     <!-- End Footer -->
 
-    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>></script>
+    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?> ></script>
 </body>
 
 </html>

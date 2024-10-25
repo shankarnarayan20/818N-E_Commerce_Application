@@ -73,9 +73,7 @@ if (isset($_POST['confirm_payment'])) {
             </div>
         </div>
     </div>
-    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>>
-        >
-    </script>
+    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?> ></script>
 </body>
 
 </html>

@@ -18,7 +18,7 @@ function createDatabaseConnection()
         $secretsManager = $sdk->createSecretsManager();
 
         // Your secret name
-        $secretName = 'localmysql';
+        $secretName = 'MyDatabaseCredentials';
 
         // Retrieve the secret
         $result = $secretsManager->getSecretValue([
@@ -35,7 +35,7 @@ function createDatabaseConnection()
             $password = $secret['DB_PASS'];
             $db_name = $secret['DB_NAME'];
             $port = $secret['DB_PORT'];
-            $cdn_url = "";
+            $cdn_url = $secret['CDN_URL'];
 
             // Create a new mysqli connection
             $con = new mysqli($host, $username, $password, $db_name, $port);
@@ -47,8 +47,8 @@ function createDatabaseConnection()
 
             // Set SSL options
             $ssl_options = [
-                MYSQLI_OPT_SSL_VERIFY_SERVER_CERT => true,
-                MYSQLI_OPT_SSL_CA => '/etc/ssl/certs/us-east-1-bundle.pem', // Path to your CA file
+                'MYSQLI_OPT_SSL_VERIFY_SERVER_CERT' => true,
+                'MYSQLI_OPT_SSL_CA' => '/etc/ssl/certs/us-east-1-bundle.pem', // Path to your CA file
             ];
 
             // Apply SSL options to the connection
