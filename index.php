@@ -10,8 +10,9 @@ session_start();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ecommerce Home Page</title>
-    <link rel="stylesheet" href="./assets/css/bootstrap.css" />
-    <link rel="stylesheet" href="./assets/css/main.css" />
+    <?php global $cdn_url; ?>
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css"; ?> />
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css"; ?> />
 </head>
 
 <body>
@@ -42,18 +43,17 @@ session_start();
                         <a class="nav-link" href="#">Contact</a>
                     </li>
                     <?php
-                        if(isset($_SESSION['username'])){                            
-                            echo "
+                    if (isset($_SESSION['username'])) {
+                        echo "
                             <li class='nav-item'>
                             <a class='nav-link' href='./users_area/profile.php'>My Account</a>
                         </li>";
-                        }
-                        else{
-                            echo "
+                    } else {
+                        echo "
                             <li class='nav-item'>
                             <a class='nav-link' href='./users_area/user_registration.php'>Register</a>
                         </li>";
-                        }
+                    }
                     ?>
                 </ul>
                 <form class="d-flex">
@@ -74,7 +74,7 @@ session_start();
                                 ?>
                             </sup>
                             <span class="d-none">
-                                Total Price is: 
+                                Total Price is:
                                 <?php
                                 total_cart_price();
                                 ?>
@@ -88,25 +88,25 @@ session_start();
                                 <path d="M16.5 14C18.9853 14 21 11.9853 21 9.5C21 7.01472 18.9853 5 16.5 5C14.0147 5 12 7.01472 12 9.5C12 11.9853 14.0147 14 16.5 14Z" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                             <?php
-                                if(!isset($_SESSION['username'])){
-                                    echo "<span>
+                            if (!isset($_SESSION['username'])) {
+                                echo "<span>
                                     Welcome guest
                                 </span>";
-                            }else{
-                                    echo "<span>
-                                    Welcome ".$_SESSION['username']. "</span>";
-                                }
-                                ?>
+                            } else {
+                                echo "<span>
+                                    Welcome " . $_SESSION['username'] . "</span>";
+                            }
+                            ?>
                         </a>
                     </li>
                     <?php
-                    if(!isset($_SESSION['username'])){
+                    if (!isset($_SESSION['username'])) {
                         echo "<li class='nav-item'>
                         <a class='nav-link' href='./users_area/user_login.php'>
                             Login
                         </a>
                     </li>";
-                }else{
+                    } else {
                         echo "<li class='nav-item'>
                         <a class='nav-link' href='./users_area/logout.php'>
                             Logout
@@ -361,7 +361,7 @@ session_start();
     </div> -->
     <!-- End Footer -->
 
-    <script src="./assets/js/bootstrap.bundle.js"></script>
+    <script src=<?php echo "$cdn_url/assets/js/bootstrap.bundle.js" ?>></script>
 </body>
 
 </html>
