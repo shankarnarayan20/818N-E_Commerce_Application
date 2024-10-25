@@ -45,6 +45,24 @@ function createDatabaseConnection()
                 die("Connection failed: " . $con->connect_error);
             }
 
+            // Set SSL options
+            $ssl_options = [
+                MYSQLI_OPT_SSL_VERIFY_SERVER_CERT => true,
+                MYSQLI_OPT_SSL_CA => '/etc/ssl/certs/us-east-1-bundle.pem', // Path to your CA file
+            ];
+
+            // Apply SSL options to the connection
+            foreach ($ssl_options as $option => $value) {
+                if (!mysqli_options($con, $option, $value)) {
+                    die('Could not set option: ' . mysqli_error($con));
+                }
+            }
+
+            // Reconnect with SSL options
+            if (!$con->real_connect($host, $username, $password, $db_name, $port, null, MYSQLI_CLIENT_SSL)) {
+                die('Connect Error (' . $con->connect_errno . ') ' . $con->connect_error);
+            }
+
             return [$con, $cdn_url]; // Return the connection object
         }
     } catch (AwsException $e) {
