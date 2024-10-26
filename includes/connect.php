@@ -37,31 +37,25 @@ function createDatabaseConnection()
             $port = $secret['DB_PORT'];
             $cdn_url = $secret['CDN_URL'];
 
-            // Create a new mysqli connection
-            $con = new mysqli($host, $username, $password, $db_name, $port);
+            $con = mysqli_init();
+            mysqli_ssl_set($con, NULL, NULL, "/etc/ssl/certs/us-east-1-bundle.pem", NULL, NULL);
+            $con->options(MYSQLI_CLIENT_SSL_VERIFY_SERVER_CERT, true);
+
+            $con->real_connect($host, $username, $password, $db_name, $port);
 
             // Check the connection
             if ($con->connect_error) {
                 die("Connection failed: " . $con->connect_error);
             }
 
-            // Set SSL options
-            $ssl_options = [
-                'MYSQLI_OPT_SSL_VERIFY_SERVER_CERT' => true,
-                'MYSQLI_OPT_SSL_CA' => '/etc/ssl/certs/us-east-1-bundle.pem', // Path to your CA file
-            ];
-
-            // Apply SSL options to the connection
-            foreach ($ssl_options as $option => $value) {
-                if (!mysqli_options($con, $option, $value)) {
-                    die('Could not set option: ' . mysqli_error($con));
-                }
-            }
-
-            // Reconnect with SSL options
-            if (!$con->real_connect($host, $username, $password, $db_name, $port, null, MYSQLI_CLIENT_SSL)) {
-                die('Connect Error (' . $con->connect_errno . ') ' . $con->connect_error);
-            }
+            // After establishing connection
+            // $result = $con->query("SHOW STATUS LIKE 'Ssl_cipher'");
+            // $row = $result->fetch_array();
+            // if (!empty($row[1])) {
+            //     echo "SSL is enabled. Cipher in use: " . $row[1];
+            // } else {
+            //     echo "SSL is not enabled";
+            // }
 
             return [$con, $cdn_url]; // Return the connection object
         }
