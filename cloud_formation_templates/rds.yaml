@@ -26,6 +26,9 @@ Parameters:
     Description: EC2 to RDS Security Group
     Type: String
 
+  RDSMonitoringRoleArn:
+    Description: Arn for Enhanced monitoring Role
+    Type: String
 
   DBInstanceClass:
     Description: The RDS instance type
@@ -66,6 +69,7 @@ Resources:
       DBSnapshotIdentifier: mid-term-database-snapshot  # Replace with your snapshot ID
       AllocatedStorage: "20"
       StorageType: gp3
+      MonitoringRoleArn: !Ref RDSMonitoringRoleArn
       MonitoringInterval: 60  # Enable detailed monitoring
       EnableCloudwatchLogsExports: ["error", "general"]
       DeletionProtection: false

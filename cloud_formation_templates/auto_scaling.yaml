@@ -71,7 +71,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 10.0.0.0/16  # Allow SSH access (restricted to internal VPC)
+          CidrIp: 0.0.0.0/0  # Allow SSH access (restricted to internal VPC)
       
 
   # Adding Rules to EC2 to RDS Security Group for EC2 Instances

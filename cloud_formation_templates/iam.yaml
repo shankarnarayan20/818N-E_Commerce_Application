@@ -67,6 +67,20 @@ Resources:
                 Resource: 
                   - arn:aws:logs:*:*:log-group:/aws/vpc/flowlogs*
 
+  RDSMonitoringRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: RDSMonitoringRole  
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: rds.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
+
 Outputs:
   EC2RoleArn:
     Description: ARN of the EC2 Role
@@ -85,3 +99,9 @@ Outputs:
     Value: !GetAtt VPCFlowLogsRole.Arn
     Export:
       Name: VPCFlowLogsRoleArn
+
+  RDSMonitoringRoleArn:
+    Description: ARN of the RDS Enhanced Monitoring Role
+    Value: !GetAtt RDSMonitoringRole.Arn
+    Export:
+      Name: RDSMonitoringRoleArn

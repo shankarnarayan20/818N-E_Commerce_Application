@@ -32,6 +32,7 @@ Resources:
         PrivateSubnetId2: !GetAtt VPCStack.Outputs.PrivateSubnetId2
         EC2toRDSSecurityGroupId: !GetAtt VPCStack.Outputs.EC2toRDSSecurityGroupId
         RDSfromEC2SecurityGroupId: !GetAtt VPCStack.Outputs.RDSfromEC2SecurityGroupId
+        RDSMonitoringRoleArn: !GetAtt IAMStack.Outputs.RDSMonitoringRoleArn
 
   # Nested stack for Auto Scaling and Load Balancer resources
   ASGStack:
