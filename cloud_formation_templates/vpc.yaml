@@ -9,17 +9,23 @@ Resources:
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:
-        - Key: Name
-          Value: EcommerceVPC
+        - Key: AppName
+          Value: CC-Midterm
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
+    Tags:
+      - Key: AppName
+        Value: CC-Midterm
 
   VPCGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties: 
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # CloudWatch Log Group for VPC Flow Logs
   VPCFlowLogGroup:
@@ -27,16 +33,22 @@ Resources:
     Properties:
       LogGroupName: /aws/vpc/flowlogs
       RetentionInDays: 7
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # VPC Flow Logs
   VPCFlowLogs:
     Type: AWS::EC2::FlowLog
     Properties:
-      DeliverLogsPermissionArn: arn:aws:iam::156041403412:role/Midterm-ec2-role
+      DeliverLogsPermissionArn: !ImportValue VPCFlowLogsRoleArn
       LogGroupName: !Ref VPCFlowLogGroup
       ResourceId: !Ref VPC
       ResourceType: VPC
       TrafficType: ALL
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # Public Subnet 1
   PublicSubnet1:
@@ -46,6 +58,9 @@ Resources:
       CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
       AvailabilityZone: "us-east-1a"
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # Public Subnet 2
   PublicSubnet2:
@@ -55,6 +70,9 @@ Resources:
       CidrBlock: 10.0.2.0/24
       MapPublicIpOnLaunch: true
       AvailabilityZone: "us-east-1b"
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # Private Subnet 1
   PrivateSubnet1:
@@ -63,6 +81,9 @@ Resources:
       VpcId: !Ref VPC
       CidrBlock: 10.0.3.0/24
       AvailabilityZone: "us-east-1a"  
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
       
       
   #Private Subnet 2
@@ -72,12 +93,18 @@ Resources:
       VpcId: !Ref VPC
       CidrBlock: 10.0.4.0/24
       AvailabilityZone: "us-east-1b"
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # Public Route Table
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # Route to Internet Gateway in Public Route Table
   PublicRoute:
@@ -86,6 +113,9 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # Associate Public Subnet 1 with Public Route Table
   PublicSubnet1RouteTableAssociation:
@@ -93,6 +123,9 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnet1
       RouteTableId: !Ref PublicRouteTable
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # Associate Public Subnet 2 with Public Route Table
   PublicSubnet2RouteTableAssociation:
@@ -100,12 +133,18 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnet2
       RouteTableId: !Ref PublicRouteTable
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # Private Route Table
   PrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # Associate Private Subnet 1 with Private Route Table
   PrivateSubnet1RouteTableAssociation:
@@ -113,6 +152,9 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnet1
       RouteTableId: !Ref PrivateRouteTable
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # Associate Private Subnet 2 with Private Route Table
   PrivateSubnet2RouteTableAssociation:
@@ -120,24 +162,77 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnet2
       RouteTableId: !Ref PrivateRouteTable
+    Tags:
+      - Key: AppName
+        Value: CC-Midterm
+
+
+  EC2toRDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable Egress MySQL access for EC2
+      VpcId: !Ref VPCId
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
+
+  RDSfromEC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable Egress MySQL access for RDS
+      VpcId: !Ref VPCId
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
+
+    
 
 Outputs:
+
   VPCId:
     Description: The ID of the VPC
     Value: !Ref VPC
+    Export:
+      Name: VPCId
 
   PublicSubnetId1:
     Description: The ID of Public Subnet 1
     Value: !Ref PublicSubnet1
+    Export:
+      Name: PublicSubnetId1
 
   PublicSubnetId2:
     Description: The ID of Public Subnet 2
     Value: !Ref PublicSubnet2
+    Export:
+      Name: PublicSubnetId2
 
   PrivateSubnetId1:
     Description: The ID of Private Subnet 1
     Value: !Ref PrivateSubnet1
+    Export:
+      Name: PrivateSubnetId1
 
   PrivateSubnetId2:
     Description: The ID of Private Subnet 2
     Value: !Ref PrivateSubnet2
+    Export:
+      Name: PrivateSubnetId2
+
+  EC2SecurityGroupId:
+    Description: ID for EC2 Security group (HTTPS, SSH)
+    Value: !Ref EC2SecurityGroup
+    Export:
+      Name: EC2SecurityGroupId
+
+  EC2toRDSSecurityGroupId:
+    Description: ID for EC2 to RDS Security group (MySQL Egress)
+    Value: !Ref EC2toRDSSecurityGroup
+    Export:
+      Name: EC2toRDSSecurityGroupId
+
+  RDSfromEC2SecurityGroupId:
+    Description: ID for RDS to EC2 Security group (MySQL Ingress)
+    Value: !Ref RDSfromEC2SecurityGroup
+    Export:
+      Name: RDSfromEC2SecurityGroupId

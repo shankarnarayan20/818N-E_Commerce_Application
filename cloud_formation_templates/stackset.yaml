@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Parent template for deploying E-commerce Platform (IAM, VPC, RDS, ASG).
+
+Resources:
+  # Nested stack for IAM roles
+  IAMStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://enpm818n-cc-midterm-group14.s3.us-east-1.amazonaws.com/stacks/iam.yaml
+      TimeoutInMinutes: 15 
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
+
+  # Nested stack for VPC resources
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://enpm818n-cc-midterm-group14.s3.us-east-1.amazonaws.com/stacks/vpc.yaml
+      TimeoutInMinutes: 15
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
+
+  # Nested stack for RDS (if applicable)
+  RDSStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://enpm818n-cc-midterm-group14.s3.us-east-1.amazonaws.com/stacks/rds.yaml
+      TimeoutInMinutes: 20
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
+      Parameters:
+        VPCId: !GetAtt VPCStack.Outputs.VPCId
+        PublicSubnetId1: !GetAtt VPCStack.Outputs.PublicSubnetId1
+        PublicSubnetId2: !GetAtt VPCStack.Outputs.PublicSubnetId2
+        PrivateSubnetId1: !GetAtt VPCStack.Outputs.PrivateSubnetId1
+        PrivateSubnetId2: !GetAtt VPCStack.Outputs.PrivateSubnetId2
+        EC2toRDSSecurityGroupId: !GetAtt VPCStack.Outputs.EC2toRDSSecurityGroupId
+        RDSfromEC2SecurityGroupId: !GetAtt VPCStack.Outputs.RDSfromEC2SecurityGroupId
+
+  # Nested stack for Auto Scaling and Load Balancer resources
+  ASGStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://enpm818n-cc-midterm-group14.s3.us-east-1.amazonaws.com/stacks/vpc.yaml
+      TimeoutInMinutes: 20
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
+      Parameters:
+        VPCId: !GetAtt VPCStack.Outputs.VPCId
+        PublicSubnetId1: !GetAtt VPCStack.Outputs.PublicSubnetId1
+        PublicSubnetId2: !GetAtt VPCStack.Outputs.PublicSubnetId2
+        RDSfromEC2SecurityGroupId: !GetAtt VPCStack.Outputs.RDSfromEC2SecurityGroupId
+        EC2toRDSSecurityGroupId: !GetAtt VPCStack.Outputs.EC2toRDSSecurityGroupId
+        EC2InstanceProfileArn: !GetAtt IAMStack.Outputs.EC2InstanceProfileArn
+
+Outputs:
+  IAMStackId:
+    Value: !Ref IAMStack
+    Description: ID of the nested IAM stack.
+
+  VPCStackId:
+    Value: !Ref VPCStack
+    Description: ID of the nested VPC stack.
+
+  RDSStackId:
+    Value: !Ref RDSStack
+    Description: ID of the nested RDS stack.
+
+  ASGStackId:
+    Value: !Ref ASGStack
+    Description: ID of the nested ASG stack.

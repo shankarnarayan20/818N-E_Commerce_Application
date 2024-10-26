@@ -2,32 +2,30 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: RDS Template for E-commerce Platform
 
 Parameters:
+
   VPCId:
     Type: String
     Description: The VPC ID where RDS will be deployed.
 
-  PrivateSubnetId:
+  PrivateSubnetId1:
     Type: String
-    Description: The private subnet ID for RDS.
+    Description: The private subnet ID for EC2 instances.
+    Default: !ImportValue PrivateSubnetId1
 
-  DBUser:
-    Description: The database admin account username
+  PrivateSubnetId2:
     Type: String
-    MinLength: 1
-    MaxLength: 16
-    Default: admin
+    Description: The private subnet ID for EC2 instances.
+    Default: !ImportValue PrivateSubnetId2
 
-  DBPassword:
-    Description: The database admin account password
-    Type: String
-    NoEcho: true
-    MinLength: 8
-    MaxLength: 41
+  RDSfromEC2SecurityGroupId:
+    Description: RDS to EC2 Security Group
+    Type: AWS::EC2::SecurityGroup
+    Default: !ImportValue RDSfromEC2SecurityGroupId
 
-  DBName:
-    Description: The database name
-    Type: String
-    Default: ecommerceDB
+  EC2toRDSSecurityGroupId:
+    Description: EC2 to RDS Security Group
+    Type: AWS::EC2::SecurityGroup
+    Default: !ImportValue EC2toRDSSecurityGroupId
 
   DBInstanceClass:
     Description: The RDS instance type
@@ -35,41 +33,88 @@ Parameters:
     Default: db.t2.micro
 
 Resources:
-  RDSSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Enable MySQL access
-      VpcId: !Ref VPCId
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 3306
-          ToPort: 3306
-          CidrIp: 0.0.0.0/0
 
-  RDSInstance:
-    Type: AWS::RDS::DBInstance
+  # KMS Key for RDS encryption
+  KMSKey:
+    Type: AWS::KMS::Key
     Properties:
-      AllocatedStorage: 20
-      DBInstanceClass: !Ref DBInstanceClass
-      Engine: MySQL
-      MasterUsername: !Ref DBUser
-      MasterUserPassword: !Ref DBPassword
-      DBName: !Ref DBName
-      MultiAZ: true
-      StorageEncrypted: true
-      BackupRetentionPeriod: 7
-      VPCSecurityGroups:
-        - !Ref RDSSecurityGroup
-      DBSubnetGroupName: !Ref DBSubnetGroup
+      Description: "KMS key for RDS encryption"
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: "*"
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+              - kms:CreateGrant
+              - kms:ListGrants
+              - kms:DescribeKey
+            Resource: "*"
+            Condition:
+              StringEquals:
+                kms:CallerAccount: '156041403412'
+                kms:ViaService: rds.us-east-1.amazonaws.com
+          - Effect: Allow
+            Principal:
+              AWS: arn:aws:iam::156041403412:root
+            Action:
+              - kms:Describe*
+              - kms:Get*
+              - kms:List*
+              - kms:RevokeGrant
+            Resource: "*"
+      Enabled: true
+      EnableKeyRotation: false
+  
+  SGIngressRule1:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref RDSfromEC2SecurityGroupId
+      IpProtocol: tcp
+      FromPort: 3306
+      ToPort: 3306
+      SourceSecurityGroupId: !Ref EC2toRDSSecurityGroupId
 
-  DBSubnetGroup:
+  RDSDBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: Subnet group for RDS
       SubnetIds:
-        - !Ref PrivateSubnetId
+        - !Ref PrivateSubnetId1
+        - !Ref PrivateSubnetId2
+
+  RDSDBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: database-1
+      DBInstanceClass: db.t3.micro
+      Engine: mysql
+      EngineVersion: 8.0.39
+      DBSubnetGroupName: !Ref RDSDBSubnetGroup
+      VPCSecurityGroups:
+        - !Ref RDSfromEC2SecurityGroupId
+      MultiAZ: true
+      StorageEncrypted: true
+      KmsKeyId: !GetAtt KMSKey.Arn
+      DBSnapshotIdentifier: mid-term-database-snapshot  # Replace with your snapshot ID
+      AllocatedStorage: "20"
+      StorageType: gp3
+      Iops: 1000
+      MonitoringInterval: 60  # Enable detailed monitoring
+      EnableCloudwatchLogsExports: ["error", "general"]
+      DeletionProtection: false
+      PubliclyAccessible: false
+      BackupRetentionPeriod: 1
+
+  
 
 Outputs:
   RDSInstanceEndpoint:
     Description: The endpoint address of the RDS instance
     Value: !GetAtt RDSInstance.Endpoint.Address
+    Export:
+      Name: RDSInstanceEndpoint

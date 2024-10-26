@@ -5,18 +5,17 @@ Parameters:
   VPCId:
     Type: String
     Description: The VPC ID where the resources will be deployed.
-    Default: vpc-0f688e20beeea151e
+    Default: !ImportValue VPCId
 
   PublicSubnetId1:
     Type: String
     Description: The public subnet ID for EC2 instances.
-    Default: subnet-0cc8916a0c9660e27 
+    Default: !ImportValue PublicSubnetId1
   
   PublicSubnetId2:
     Type: String
     Description: The public subnet ID for EC2 instances.
-    Default: subnet-0defe66feecf2c170
-
+    Default: !ImportValue PublicSubnetId2
 
   KeyName:
     Description: Name of an existing EC2 KeyPair
@@ -26,20 +25,40 @@ Parameters:
     Description: EC2 instance type
     Type: String
     Default: t2.micro
-  
-  RDSSecurityGroup:
-    Description: RDS Security Group
-    Type: AWS::EC2::SecurityGroup
-    Default: sg-0284bbe2dff6726bd
 
-  # S3BucketName:
-  #   Description: The name of the S3 bucket to be accessed by EC2 instances
-  #   Type: String
+  RDSfromEC2SecurityGroupId:
+    Description: RDS to EC2 Security Group
+    Type: AWS::EC2::SecurityGroup
+    Default: !ImportValue RDSfromEC2SecurityGroupId
+
+  EC2toRDSSecurityGroupId:
+    Description: EC2 to RDS Security Group
+    Type: AWS::EC2::SecurityGroup
+    Default: !ImportValue EC2toRDSSecurityGroupId
+  
+  AMIId:
+    Description: Base Ubuntu Image for Instances in EC2 instances
+    Type: String
+    Default: "ami-xxxxxxxxxxxxx"
 
 Resources:
 
+  # Security Group for Load Balancer
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable HTTPS
+      VpcId: !Ref VPCId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0  # Allow HTTPS access from anywhere
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
-  # Security Group for EC2 Instances
+  #Security group for EC2 instances to allow HTTPS and SSH
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -49,23 +68,24 @@ Resources:
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-          CidrIp: 0.0.0.0/0  # Allow HTTP access from anywhere
+          SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup   # Allow HTTPS access only from the loadbalancer
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 0.0.0.0/0  # Allow SSH access (restrict to specific IPs in production)
+          CidrIp: 10.0.0.0/16  # Allow SSH access (restricted to internal VPC)
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
-  EC2RDSSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
+  # Adding Rules to EC2 to RDS Security Group for EC2 Instances
+  SGEgressRule1:
+    Type: AWS::EC2::SecurityGroupEgress
     Properties:
-      GroupDescription: Enable Egress MySQL access
-      VpcId: !Ref VPCId
-      SecurityGroupEgress:
-        - IpProtocol: tcp
-          FromPort: 3306
-          ToPort: 3306
-          DestinationSecurityGroupId: !Ref RDSSecurityGroup  # Allow HTTP access from anywhere
-
+      GroupId: !Ref EC2toRDSSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 3306
+      ToPort: 3306
+      DestinationSecurityGroupId: !Ref RDSfromEC2SecurityGroupId 
 
   # Launch Configuration with IAM Role and Security Group
   LaunchTemplate:
@@ -73,26 +93,17 @@ Resources:
     Properties:
       LaunchTemplateName: MyLaunchTemplate
       LaunchTemplateData:
-        ImageId: ami-066e50926fb9d17a7  # Choose an appropriate AMI
+        ImageId: !Ref AMIId  # Choose an appropriate AMI
         InstanceType: !Ref InstanceType
         KeyName: !Ref KeyName
         SecurityGroupIds:
           - !Ref EC2SecurityGroup
-          - !Ref EC2RDSSecurityGroup
+          - !Ref EC2toRDSSecurityGroupId
         IamInstanceProfile:
-          Arn: arn:aws:iam::156041403412:instance-profile/Midterm-ec2-role  # Use the ARN of the existing instance profile
-        UserData:
-          Fn::Base64: |
-            #!/bin/bash
-            cd /var/www/html
-            sudo rm -fr ./*
-            cd ~
-            git clone https://github.com/shankarnarayan20/818N-E_Commerce_Application.git midterm
-            sudo mv midterm/* /var/www/html
-            rm -fr midterm
-            cd /var/www/html
-            export COMPOSER_ALLOW_SUPERUSER=1
-            sudo composer install --no-interaction 
+          Arn: !ImportValue  EC2InstanceProfileArn  # Use the ARN of the existing instance profile
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # Target Group for Load Balancer
   TargetGroup:
@@ -105,6 +116,9 @@ Resources:
       HealthCheckProtocol: HTTPS
       HealthCheckPort: 443
       HealthCheckPath: /
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # Load Balancer to distribute traffic
   LoadBalancer:
@@ -114,7 +128,10 @@ Resources:
         - !Ref PublicSubnetId1
         - !Ref PublicSubnetId2
       SecurityGroups:
-        - !Ref EC2SecurityGroup
+        - !Ref LoadBalancerSecurityGroup
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # Listener to route traffic to the Target Group
   Listener:
@@ -129,6 +146,9 @@ Resources:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref TargetGroup
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # Auto Scaling Group to manage EC2 instances
   AutoScalingGroup:
@@ -145,6 +165,9 @@ Resources:
       DesiredCapacity: 1
       TargetGroupARNs:
         - !Ref TargetGroup
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # CloudWatch Log Group for EC2 Instances
   CloudWatchLogGroup:
@@ -152,6 +175,9 @@ Resources:
     Properties:
       LogGroupName: /aws/ec2/ecommerce-application
       RetentionInDays: 7  # Optional: Retain logs for 14 days
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # CloudWatch Alarm for High CPU Usage
   HighCPUAlarm:
@@ -170,6 +196,9 @@ Resources:
       ComparisonOperator: GreaterThanThreshold
       AlarmActions:
         - !Ref ScaleUpPolicy
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # CloudWatch Alarm for Low CPU Usage
   LowCPUAlarm:
@@ -188,6 +217,9 @@ Resources:
       ComparisonOperator: LessThanThreshold
       AlarmActions:
         - !Ref ScaleDownPolicy
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # Step Scaling Policy to Scale Up
   ScaleUpPolicy:
@@ -200,6 +232,9 @@ Resources:
         - MetricIntervalLowerBound: 0
           ScalingAdjustment: 1
       Cooldown: 300
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
   # Step Scaling Policy to Scale Down
   ScaleDownPolicy:
@@ -212,6 +247,9 @@ Resources:
         - MetricIntervalUpperBound: 0
           ScalingAdjustment: -1
       Cooldown: 300
+      Tags:
+        - Key: AppName
+          Value: CC-Midterm
 
 Outputs:
   AutoScalingGroupId:
