@@ -5,21 +5,19 @@ Parameters:
   VPCId:
     Type: String
     Description: The VPC ID where the resources will be deployed.
-    Default: !ImportValue VPCId
 
   PublicSubnetId1:
     Type: String
     Description: The public subnet ID for EC2 instances.
-    Default: !ImportValue PublicSubnetId1
   
   PublicSubnetId2:
     Type: String
     Description: The public subnet ID for EC2 instances.
-    Default: !ImportValue PublicSubnetId2
 
   KeyName:
     Description: Name of an existing EC2 KeyPair
-    Type: AWS::EC2::KeyPair::KeyName
+    Type: String
+    Default: "aws_shank_kp"
 
   InstanceType:
     Description: EC2 instance type
@@ -28,18 +26,21 @@ Parameters:
 
   RDSfromEC2SecurityGroupId:
     Description: RDS to EC2 Security Group
-    Type: AWS::EC2::SecurityGroup
-    Default: !ImportValue RDSfromEC2SecurityGroupId
+    Type: String
 
   EC2toRDSSecurityGroupId:
     Description: EC2 to RDS Security Group
-    Type: AWS::EC2::SecurityGroup
-    Default: !ImportValue EC2toRDSSecurityGroupId
+    Type: String
   
   AMIId:
     Description: Base Ubuntu Image for Instances in EC2 instances
     Type: String
-    Default: "ami-xxxxxxxxxxxxx"
+    Default: "ami-0866a3c8686eaeeba"
+
+  EC2InstanceProfileArn:
+    Description: Instance profile ARN
+    Type: String
+
 
 Resources:
 
@@ -54,9 +55,7 @@ Resources:
           FromPort: 443
           ToPort: 443
           CidrIp: 0.0.0.0/0  # Allow HTTPS access from anywhere
-      Tags:
-        - Key: AppName
-          Value: CC-Midterm
+      
 
   #Security group for EC2 instances to allow HTTPS and SSH
   EC2SecurityGroup:
@@ -73,9 +72,7 @@ Resources:
           FromPort: 22
           ToPort: 22
           CidrIp: 10.0.0.0/16  # Allow SSH access (restricted to internal VPC)
-      Tags:
-        - Key: AppName
-          Value: CC-Midterm
+      
 
   # Adding Rules to EC2 to RDS Security Group for EC2 Instances
   SGEgressRule1:
@@ -100,10 +97,8 @@ Resources:
           - !Ref EC2SecurityGroup
           - !Ref EC2toRDSSecurityGroupId
         IamInstanceProfile:
-          Arn: !ImportValue  EC2InstanceProfileArn  # Use the ARN of the existing instance profile
-      Tags:
-        - Key: AppName
-          Value: CC-Midterm
+          Arn: !Ref   EC2InstanceProfileArn  # Use the ARN of the existing instance profile
+      
 
   # Target Group for Load Balancer
   TargetGroup:
@@ -116,9 +111,7 @@ Resources:
       HealthCheckProtocol: HTTPS
       HealthCheckPort: 443
       HealthCheckPath: /
-      Tags:
-        - Key: AppName
-          Value: CC-Midterm
+      
 
   # Load Balancer to distribute traffic
   LoadBalancer:
@@ -129,9 +122,7 @@ Resources:
         - !Ref PublicSubnetId2
       SecurityGroups:
         - !Ref LoadBalancerSecurityGroup
-      Tags:
-        - Key: AppName
-          Value: CC-Midterm
+      
 
   # Listener to route traffic to the Target Group
   Listener:
@@ -146,9 +137,7 @@ Resources:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref TargetGroup
-      Tags:
-        - Key: AppName
-          Value: CC-Midterm
+      
 
   # Auto Scaling Group to manage EC2 instances
   AutoScalingGroup:
@@ -165,9 +154,7 @@ Resources:
       DesiredCapacity: 1
       TargetGroupARNs:
         - !Ref TargetGroup
-      Tags:
-        - Key: AppName
-          Value: CC-Midterm
+      
 
   # CloudWatch Log Group for EC2 Instances
   CloudWatchLogGroup:
@@ -175,9 +162,7 @@ Resources:
     Properties:
       LogGroupName: /aws/ec2/ecommerce-application
       RetentionInDays: 7  # Optional: Retain logs for 14 days
-      Tags:
-        - Key: AppName
-          Value: CC-Midterm
+      
 
   # CloudWatch Alarm for High CPU Usage
   HighCPUAlarm:
@@ -196,9 +181,7 @@ Resources:
       ComparisonOperator: GreaterThanThreshold
       AlarmActions:
         - !Ref ScaleUpPolicy
-      Tags:
-        - Key: AppName
-          Value: CC-Midterm
+      
 
   # CloudWatch Alarm for Low CPU Usage
   LowCPUAlarm:
@@ -217,9 +200,7 @@ Resources:
       ComparisonOperator: LessThanThreshold
       AlarmActions:
         - !Ref ScaleDownPolicy
-      Tags:
-        - Key: AppName
-          Value: CC-Midterm
+      
 
   # Step Scaling Policy to Scale Up
   ScaleUpPolicy:
@@ -232,9 +213,7 @@ Resources:
         - MetricIntervalLowerBound: 0
           ScalingAdjustment: 1
       Cooldown: 300
-      Tags:
-        - Key: AppName
-          Value: CC-Midterm
+      
 
   # Step Scaling Policy to Scale Down
   ScaleDownPolicy:
@@ -247,9 +226,7 @@ Resources:
         - MetricIntervalUpperBound: 0
           ScalingAdjustment: -1
       Cooldown: 300
-      Tags:
-        - Key: AppName
-          Value: CC-Midterm
+      
 
 Outputs:
   AutoScalingGroupId:

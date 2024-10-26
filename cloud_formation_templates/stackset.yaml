@@ -8,9 +8,7 @@ Resources:
     Properties:
       TemplateURL: https://enpm818n-cc-midterm-group14.s3.us-east-1.amazonaws.com/stacks/iam.yaml
       TimeoutInMinutes: 15 
-      Tags:
-        - Key: AppName
-          Value: CC-Midterm
+      
 
   # Nested stack for VPC resources
   VPCStack:
@@ -18,9 +16,9 @@ Resources:
     Properties:
       TemplateURL: https://enpm818n-cc-midterm-group14.s3.us-east-1.amazonaws.com/stacks/vpc.yaml
       TimeoutInMinutes: 15
-      Tags:
-        - Key: AppName
-          Value: CC-Midterm
+      Parameters:
+        VPCFlowLogsRoleArn: !GetAtt IAMStack.Outputs.VPCFlowLogsRoleArn
+      
 
   # Nested stack for RDS (if applicable)
   RDSStack:
@@ -28,13 +26,8 @@ Resources:
     Properties:
       TemplateURL: https://enpm818n-cc-midterm-group14.s3.us-east-1.amazonaws.com/stacks/rds.yaml
       TimeoutInMinutes: 20
-      Tags:
-        - Key: AppName
-          Value: CC-Midterm
       Parameters:
         VPCId: !GetAtt VPCStack.Outputs.VPCId
-        PublicSubnetId1: !GetAtt VPCStack.Outputs.PublicSubnetId1
-        PublicSubnetId2: !GetAtt VPCStack.Outputs.PublicSubnetId2
         PrivateSubnetId1: !GetAtt VPCStack.Outputs.PrivateSubnetId1
         PrivateSubnetId2: !GetAtt VPCStack.Outputs.PrivateSubnetId2
         EC2toRDSSecurityGroupId: !GetAtt VPCStack.Outputs.EC2toRDSSecurityGroupId
@@ -44,11 +37,9 @@ Resources:
   ASGStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://enpm818n-cc-midterm-group14.s3.us-east-1.amazonaws.com/stacks/vpc.yaml
+      TemplateURL: https://enpm818n-cc-midterm-group14.s3.us-east-1.amazonaws.com/stacks/auto_scaling.yaml
       TimeoutInMinutes: 20
-      Tags:
-        - Key: AppName
-          Value: CC-Midterm
+      
       Parameters:
         VPCId: !GetAtt VPCStack.Outputs.VPCId
         PublicSubnetId1: !GetAtt VPCStack.Outputs.PublicSubnetId1

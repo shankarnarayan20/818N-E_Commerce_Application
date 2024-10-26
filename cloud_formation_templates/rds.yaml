@@ -10,22 +10,22 @@ Parameters:
   PrivateSubnetId1:
     Type: String
     Description: The private subnet ID for EC2 instances.
-    Default: !ImportValue PrivateSubnetId1
+
 
   PrivateSubnetId2:
     Type: String
     Description: The private subnet ID for EC2 instances.
-    Default: !ImportValue PrivateSubnetId2
+
 
   RDSfromEC2SecurityGroupId:
     Description: RDS to EC2 Security Group
-    Type: AWS::EC2::SecurityGroup
-    Default: !ImportValue RDSfromEC2SecurityGroupId
+    Type: String
+
 
   EC2toRDSSecurityGroupId:
     Description: EC2 to RDS Security Group
-    Type: AWS::EC2::SecurityGroup
-    Default: !ImportValue EC2toRDSSecurityGroupId
+    Type: String
+
 
   DBInstanceClass:
     Description: The RDS instance type
@@ -33,45 +33,9 @@ Parameters:
     Default: db.t2.micro
 
 Resources:
-
-  # KMS Key for RDS encryption
-  KMSKey:
-    Type: AWS::KMS::Key
-    Properties:
-      Description: "KMS key for RDS encryption"
-      KeyPolicy:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              AWS: "*"
-            Action:
-              - kms:Encrypt
-              - kms:Decrypt
-              - kms:ReEncrypt*
-              - kms:GenerateDataKey*
-              - kms:CreateGrant
-              - kms:ListGrants
-              - kms:DescribeKey
-            Resource: "*"
-            Condition:
-              StringEquals:
-                kms:CallerAccount: '156041403412'
-                kms:ViaService: rds.us-east-1.amazonaws.com
-          - Effect: Allow
-            Principal:
-              AWS: arn:aws:iam::156041403412:root
-            Action:
-              - kms:Describe*
-              - kms:Get*
-              - kms:List*
-              - kms:RevokeGrant
-            Resource: "*"
-      Enabled: true
-      EnableKeyRotation: false
   
   SGIngressRule1:
-    Type: AWS::EC2::SecurityGroupEgress
+    Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId: !Ref RDSfromEC2SecurityGroupId
       IpProtocol: tcp
@@ -87,7 +51,7 @@ Resources:
         - !Ref PrivateSubnetId1
         - !Ref PrivateSubnetId2
 
-  RDSDBInstance:
+  RDSInstance:
     Type: AWS::RDS::DBInstance
     Properties:
       DBInstanceIdentifier: database-1
@@ -99,11 +63,9 @@ Resources:
         - !Ref RDSfromEC2SecurityGroupId
       MultiAZ: true
       StorageEncrypted: true
-      KmsKeyId: !GetAtt KMSKey.Arn
       DBSnapshotIdentifier: mid-term-database-snapshot  # Replace with your snapshot ID
       AllocatedStorage: "20"
       StorageType: gp3
-      Iops: 1000
       MonitoringInterval: 60  # Enable detailed monitoring
       EnableCloudwatchLogsExports: ["error", "general"]
       DeletionProtection: false
@@ -116,5 +78,3 @@ Outputs:
   RDSInstanceEndpoint:
     Description: The endpoint address of the RDS instance
     Value: !GetAtt RDSInstance.Endpoint.Address
-    Export:
-      Name: RDSInstanceEndpoint
