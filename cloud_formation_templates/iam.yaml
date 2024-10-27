@@ -18,8 +18,9 @@ Resources:
               - sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/SecretsManagerReadWrite
       Policies:
         - PolicyName: RDSAccessPolicy
           PolicyDocument:
@@ -76,7 +77,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: rds.amazonaws.com
+              Service: monitoring.rds.amazonaws.com
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
