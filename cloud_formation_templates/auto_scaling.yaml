@@ -40,9 +40,50 @@ Parameters:
   EC2InstanceProfileArn:
     Description: Instance profile ARN
     Type: String
+  
+  AnsibleInstanceProfile:
+    Description: SSM role Instance profile ARN for Ansible Instance 
+    Type: String
 
 
 Resources:
+
+  AnsibleMasterSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable 
+      VpcId: !Ref VPCId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0  # Allow HTTPS access from anywhere
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref EC2SecurityGroup
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+  
+
+  AnsibleInstance:
+   Type: AWS::EC2::Instance
+   Properties:
+    InstanceType: "t2.micro"
+    KeyName: !Ref KeyName
+    ImageId: "ami-0b92721bc8553cdb4"
+    SecurityGroupIds:
+      - !Ref AnsibleMasterSG
+    IamInstanceProfile: !Ref AnsibleInstanceProfile
+    SubnetId: !Ref PublicSubnetId1
+    BlockDeviceMappings:
+    - DeviceName: "/dev/xvda"  # Root volume device name
+      Ebs:
+        VolumeSize: 8           # Size of the root volume in GB
+        Encrypted: true         # Enable encryption for the root volume
 
   # Security Group for Load Balancer
   LoadBalancerSecurityGroup:
@@ -71,7 +112,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 0.0.0.0/0  # Allow SSH access (restricted to internal VPC)
+          SourceSecurityGroupId: !Ref AnsibleMasterSG  # Allow SSH access (restricted to internal VPC)
       
 
   # Adding Rules to EC2 to RDS Security Group for EC2 Instances
@@ -96,9 +137,13 @@ Resources:
         SecurityGroupIds:
           - !Ref EC2SecurityGroup
           - !Ref EC2toRDSSecurityGroupId
-        IamInstanceProfile:
-          Arn: !Ref   EC2InstanceProfileArn  # Use the ARN of the existing instance profile
-      
+        IamInstanceProfile: 
+          Arn: !Ref EC2InstanceProfileArn  # Use the ARN of the existing instance profile
+        BlockDeviceMappings:
+        - DeviceName: "/dev/xvda"  # Root volume device name
+          Ebs:
+            VolumeSize: 8           # Size of the root volume in GB
+            Encrypted: true         # Enable encryption for the root volume
 
   # Target Group for Load Balancer
   TargetGroup:
@@ -175,9 +220,9 @@ Resources:
         - Name: AutoScalingGroupName
           Value: !Ref AutoScalingGroup
       Statistic: Average
-      Period: 300
+      Period: 60
       EvaluationPeriods: 2
-      Threshold: 80
+      Threshold: 70
       ComparisonOperator: GreaterThanThreshold
       AlarmActions:
         - !Ref ScaleUpPolicy
@@ -194,9 +239,9 @@ Resources:
         - Name: AutoScalingGroupName
           Value: !Ref AutoScalingGroup
       Statistic: Average
-      Period: 300
+      Period: 60
       EvaluationPeriods: 2
-      Threshold: 20
+      Threshold: 30
       ComparisonOperator: LessThanThreshold
       AlarmActions:
         - !Ref ScaleDownPolicy
@@ -212,7 +257,7 @@ Resources:
       StepAdjustments:
         - MetricIntervalLowerBound: 0
           ScalingAdjustment: 1
-      Cooldown: 300
+      Cooldown: 60
       
 
   # Step Scaling Policy to Scale Down
@@ -225,7 +270,7 @@ Resources:
       StepAdjustments:
         - MetricIntervalUpperBound: 0
           ScalingAdjustment: -1
-      Cooldown: 300
+      Cooldown: 60
       
 
 Outputs:

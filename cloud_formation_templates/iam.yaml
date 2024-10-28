@@ -83,6 +83,29 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
 
+  AnsibleRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AnsibleRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+    
+  AnsibleInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: AnsibleInstanceProfile
+      Roles:
+        - !Ref AnsibleRole
+
 Outputs:
   EC2RoleArn:
     Description: ARN of the EC2 Role
@@ -107,3 +130,15 @@ Outputs:
     Value: !GetAtt RDSMonitoringRole.Arn
     Export:
       Name: RDSMonitoringRoleArn
+
+  AnsibleRoleArn:
+    Description: ARN of the SSM Role for ansible instance
+    Value: !GetAtt AnsibleRole.Arn
+    Export:
+      Name: AnsibleRoleArn
+        
+  AnsibleInstanceProfile:
+    Description: ARN of the SSM Role for ansible instance
+    Value: !Ref AnsibleInstanceProfile
+    Export:
+      Name: AnsibleInstanceProfile

@@ -48,6 +48,7 @@ Resources:
         RDSfromEC2SecurityGroupId: !GetAtt VPCStack.Outputs.RDSfromEC2SecurityGroupId
         EC2toRDSSecurityGroupId: !GetAtt VPCStack.Outputs.EC2toRDSSecurityGroupId
         EC2InstanceProfileArn: !GetAtt IAMStack.Outputs.EC2InstanceProfileArn
+        AnsibleInstanceProfile: !GetAtt IAMStack.Outputs.AnsibleInstanceProfile
 
 Outputs:
   IAMStackId:
