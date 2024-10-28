@@ -31,6 +31,14 @@ Parameters:
   EC2toRDSSecurityGroupId:
     Description: EC2 to RDS Security Group
     Type: String
+
+  EC2SecurityGroupId:
+    Description: EC2 Security Group
+    Type: String
+
+  AnsibleSecurityGroupId:
+    Description: Ansible Security Group
+    Type: String
   
   AMIId:
     Description: Base Ubuntu Image for Instances in EC2 instances
@@ -48,25 +56,32 @@ Parameters:
 
 Resources:
 
-  AnsibleMasterSG:
-    Type: AWS::EC2::SecurityGroup
+  AnsibleSGEgressRule1:
+    Type: AWS::EC2::SecurityGroupEgress
     Properties:
-      GroupDescription: Enable 
-      VpcId: !Ref VPCId
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0  # Allow HTTPS access from anywhere
-      SecurityGroupEgress:
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          SourceSecurityGroupId: !Ref EC2SecurityGroup
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
+      GroupId: !Ref AnsibleSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      DestinationSecurityGroupId: !Ref EC2SecurityGroupId
+
+  AnsibleSGEgressRule2:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref AnsibleSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      CidrIp: 0.0.0.0/0
+
+  AnsibleSGIngressRule1:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref AnsibleSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: 0.0.0.0/0
   
 
   AnsibleInstance:
@@ -76,7 +91,7 @@ Resources:
     KeyName: !Ref KeyName
     ImageId: "ami-0b92721bc8553cdb4"
     SecurityGroupIds:
-      - !Ref AnsibleMasterSG
+      - !Ref AnsibleSecurityGroupId
     IamInstanceProfile: !Ref AnsibleInstanceProfile
     SubnetId: !Ref PublicSubnetId1
     BlockDeviceMappings:
@@ -84,6 +99,9 @@ Resources:
       Ebs:
         VolumeSize: 8           # Size of the root volume in GB
         Encrypted: true         # Enable encryption for the root volume
+    Tags:
+      - Key: Name
+        Value: Bastion-host
 
   # Security Group for Load Balancer
   LoadBalancerSecurityGroup:
@@ -98,25 +116,28 @@ Resources:
           CidrIp: 0.0.0.0/0  # Allow HTTPS access from anywhere
       
 
-  #Security group for EC2 instances to allow HTTPS and SSH
-  EC2SecurityGroup:
-    Type: AWS::EC2::SecurityGroup
+  EC2SGIngressRule1:
+    Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      GroupDescription: Enable HTTP and SSH access
-      VpcId: !Ref VPCId
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup   # Allow HTTPS access only from the loadbalancer
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          SourceSecurityGroupId: !Ref AnsibleMasterSG  # Allow SSH access (restricted to internal VPC)
+      GroupId: !Ref EC2SecurityGroupId
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+
+  EC2SGIngressRule2:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref EC2SecurityGroupId
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      SourceSecurityGroupId: !Ref AnsibleSecurityGroupId
+  
       
 
   # Adding Rules to EC2 to RDS Security Group for EC2 Instances
-  SGEgressRule1:
+  EC2SGEgressRule1:
     Type: AWS::EC2::SecurityGroupEgress
     Properties:
       GroupId: !Ref EC2toRDSSecurityGroupId
@@ -135,7 +156,7 @@ Resources:
         InstanceType: !Ref InstanceType
         KeyName: !Ref KeyName
         SecurityGroupIds:
-          - !Ref EC2SecurityGroup
+          - !Ref EC2SecurityGroupId
           - !Ref EC2toRDSSecurityGroupId
         IamInstanceProfile: 
           Arn: !Ref EC2InstanceProfileArn  # Use the ARN of the existing instance profile
@@ -143,7 +164,7 @@ Resources:
         - DeviceName: "/dev/xvda"  # Root volume device name
           Ebs:
             VolumeSize: 8           # Size of the root volume in GB
-            Encrypted: true         # Enable encryption for the root volume
+            Encrypted: true
 
   # Target Group for Load Balancer
   TargetGroup:
@@ -199,7 +220,26 @@ Resources:
       DesiredCapacity: 1
       TargetGroupARNs:
         - !Ref TargetGroup
-      
+
+
+  # Event bridge to setup new ec2 instances launched by the ASG
+  InstanceLaunchEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: InstanceLaunchEventRule
+      Description: Triggers Lambda function when an EC2 instance launches in a specific Auto Scaling group.
+      EventPattern:
+        source:
+          - aws.autoscaling
+        detail-type:
+          - EC2 Instance Launch Successful
+        detail:
+          AutoScalingGroupName:
+            - !Ref AutoScalingGroup
+      Targets:
+        - Arn: arn:aws:lambda:us-east-1:156041403412:function:Ansible_Instance_Launch
+          Id: LambdaFunctionTarget
+
 
   # CloudWatch Log Group for EC2 Instances
   CloudWatchLogGroup:

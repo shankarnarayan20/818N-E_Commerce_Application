@@ -138,6 +138,18 @@ Resources:
       SubnetId: !Ref PrivateSubnet2
       RouteTableId: !Ref PrivateRouteTable
 
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for webvservers
+      VpcId: !Ref VPC
+
+  AnsibleSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for ansible bastion host
+      VpcId: !Ref VPC
+
 
   EC2toRDSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -186,6 +198,18 @@ Outputs:
     Value: !Ref PrivateSubnet2
     Export:
       Name: PrivateSubnetId2
+
+  EC2SecurityGroupId:
+    Description: ID for RDS to EC2 Security group (MySQL Ingress)
+    Value: !Ref EC2SecurityGroup
+    Export:
+      Name: EC2SecurityGroupId
+
+  AnsibleSecurityGroupId:
+    Description: ID for RDS to EC2 Security group (MySQL Ingress)
+    Value: !Ref AnsibleSecurityGroup
+    Export:
+      Name: AnsibleSecurityGroupId
 
   EC2toRDSSecurityGroupId:
     Description: ID for EC2 to RDS Security group (MySQL Egress)

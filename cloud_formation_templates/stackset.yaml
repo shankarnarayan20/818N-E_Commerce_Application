@@ -45,6 +45,8 @@ Resources:
         VPCId: !GetAtt VPCStack.Outputs.VPCId
         PublicSubnetId1: !GetAtt VPCStack.Outputs.PublicSubnetId1
         PublicSubnetId2: !GetAtt VPCStack.Outputs.PublicSubnetId2
+        EC2SecurityGroupId: !GetAtt VPCStack.Outputs.EC2SecurityGroupId
+        AnsibleSecurityGroupId: !GetAtt VPCStack.Outputs.AnsibleSecurityGroupId
         RDSfromEC2SecurityGroupId: !GetAtt VPCStack.Outputs.RDSfromEC2SecurityGroupId
         EC2toRDSSecurityGroupId: !GetAtt VPCStack.Outputs.EC2toRDSSecurityGroupId
         EC2InstanceProfileArn: !GetAtt IAMStack.Outputs.EC2InstanceProfileArn
