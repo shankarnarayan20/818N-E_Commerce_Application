@@ -22,10 +22,10 @@ if(isset($_POST['user_update'])){
     $update_mobile = $_POST['user_mobile'];
     $update_image = $_FILES['user_image']['name'] != ''? $_FILES['user_image']['name'] : $user_image;
     $update_image_tmp = $_FILES['user_image']['tmp_name'];
-    move_uploaded_file($update_image_tmp,"./user_images/$update_image");
+    $update_image_url = uploadToS3($update_image_tmp, $update_image, 'user_images');
     
     // update query 
-    $update_query = "UPDATE `user_table` SET username='$update_user',user_email='$update_email',user_image='$update_image',user_address='$update_address',user_mobile='$update_mobile' WHERE user_id=$update_id";
+    $update_query = "UPDATE `user_table` SET username='$update_user',user_email='$update_email',user_image='$update_image_url',user_address='$update_address',user_mobile='$update_mobile' WHERE user_id=$update_id";
     $update_result = mysqli_query($con,$update_query);
     if($update_result){
         $_SESSION['username'] = $update_user;

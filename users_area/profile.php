@@ -132,14 +132,7 @@ if (!isset($_SESSION['username'])) {
                         <ul class="navbar-nav me-auto navbar-profile">
                             <?php
                             $username = $_SESSION['username'];
-                            $select_user_img = "SELECT * FROM `user_table` WHERE username='$username'";
-                            $select_user_img_result = mysqli_query($con, $select_user_img);
-                            $row_user_img = mysqli_fetch_array($select_user_img_result);
-                            $userImg = $row_user_img['user_image'];
-                            echo "                            <li class='nav-item d-flex align-items-center gap-2'>
-                                <img src='./user_images/$userImg' alt='$username photo' class='img-profile img-thumbnail'/>
-                            </li>";
-                            ?>
+                           
                             <li class="nav-item d-flex align-items-center gap-2">
                                 <a href="profile.php" class="nav-link fw-bold">
                                     <h6>Pending Orders</h6>

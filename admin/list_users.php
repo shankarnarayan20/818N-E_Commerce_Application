@@ -51,7 +51,7 @@
                             $user_id = $row_fetch_users['user_id'];
                             $username = $row_fetch_users['username'];
                             $user_email = $row_fetch_users['user_email'];
-                            $user_image = $row_fetch_users['user_image'];
+                            $user_image_url = getPresignedUrl('user_images/' . basename($user_image_key));
                             $user_address = $row_fetch_users['user_address'];
                             $user_mobile = $row_fetch_users['user_mobile'];
                             echo "
@@ -60,7 +60,7 @@
                             <td>$username</td>
                             <td>$user_email</td>
                             <td>
-                                <img src='../users_area/user_images/$user_image' alt='$username photo' class='img-thumbnail' width='100px'/>
+                                <img src='$user_image_url' alt='$username photo' class='img-thumbnail' width='100px'/>
                             </td>
                             <td>$user_address</td>
                             <td>$user_mobile</td>

@@ -1,6 +1,7 @@
 <?php
 include('../includes/connect.php');
 include('../functions/common_functions.php');
+include('../includes/s3_functions.php');
 session_start();
 ?>
 <!DOCTYPE html>
@@ -98,8 +99,8 @@ if (isset($_POST['admin_register'])) {
         echo "<script>window.alert('Passwords are not match');</script>";
     } else {
         // insert query
-        move_uploaded_file($image_tmp, "./admin_images/$image");
-        $insert_query = "INSERT INTO `admin_table` (admin_name,admin_email,admin_image,admin_password) VALUES ('$username','$email','$image','$hash_password')";
+        $admin_image_url = uploadToS3($admin_image_tmp, $admin_image, 'admin_image');
+        $insert_query = "INSERT INTO `admin_table` (admin_name,admin_email,admin_image,admin_password) VALUES ('$username','$email','$admin_image_url','$hash_password')";
         $insert_result = mysqli_query($con, $insert_query);
         if ($insert_result) {
             echo "<script>window.alert('Admin added successfully');</script>";

@@ -1,6 +1,7 @@
 <?php
 include('../includes/connect.php');
 include('../functions/common_functions.php');
+include('../includes/s3_functions.php');
 ?>
 
 <!DOCTYPE html>
@@ -96,8 +97,8 @@ if (isset($_POST['user_register'])) {
         echo "<script>window.alert('Passwords are not match');</script>";
     } else {
         // insert query
-        move_uploaded_file($user_image_tmp, "./user_images/$user_image");
-        $insert_query = "INSERT INTO `user_table` (username,user_email,user_password,user_image,user_ip,user_address,user_mobile) VALUES ('$user_username','$user_email','$hash_password','$user_image','$user_ip','$user_address','$user_mobile')";
+        $user_image_url = uploadToS3($user_image_tmp, $user_image, 'user_image');
+        $insert_query = "INSERT INTO `user_table` (username,user_email,user_password,user_image,user_ip,user_address,user_mobile) VALUES ('$user_username','$user_email','$hash_password','$user_image_url','$user_ip','$user_address','$user_mobile')";
         $insert_result = mysqli_query($con, $insert_query);
         if ($insert_result) {
             echo "<script>window.alert('User added successfully');</script>";
