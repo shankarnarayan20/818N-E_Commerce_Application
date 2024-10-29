@@ -1,6 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: VPC Template for E-commerce Platform
 
+Parameters:
+  VPCFlowLogsRoleArn:
+    Description: Flow Logs ARN
+    Type: String
+
+
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -8,9 +14,7 @@ Resources:
       CidrBlock: 10.0.0.0/16
       EnableDnsSupport: true
       EnableDnsHostnames: true
-      Tags:
-        - Key: Name
-          Value: EcommerceVPC
+      
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -20,6 +24,7 @@ Resources:
     Properties: 
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
+      
 
   # CloudWatch Log Group for VPC Flow Logs
   VPCFlowLogGroup:
@@ -27,16 +32,18 @@ Resources:
     Properties:
       LogGroupName: /aws/vpc/flowlogs
       RetentionInDays: 7
+      
 
   # VPC Flow Logs
   VPCFlowLogs:
     Type: AWS::EC2::FlowLog
     Properties:
-      DeliverLogsPermissionArn: arn:aws:iam::156041403412:role/Midterm-ec2-role
+      DeliverLogsPermissionArn: !Ref VPCFlowLogsRoleArn
       LogGroupName: !Ref VPCFlowLogGroup
       ResourceId: !Ref VPC
       ResourceType: VPC
       TrafficType: ALL
+      
 
   # Public Subnet 1
   PublicSubnet1:
@@ -46,6 +53,7 @@ Resources:
       CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
       AvailabilityZone: "us-east-1a"
+      
 
   # Public Subnet 2
   PublicSubnet2:
@@ -55,6 +63,7 @@ Resources:
       CidrBlock: 10.0.2.0/24
       MapPublicIpOnLaunch: true
       AvailabilityZone: "us-east-1b"
+      
 
   # Private Subnet 1
   PrivateSubnet1:
@@ -65,6 +74,7 @@ Resources:
       AvailabilityZone: "us-east-1a"  
       
       
+      
   #Private Subnet 2
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -72,12 +82,14 @@ Resources:
       VpcId: !Ref VPC
       CidrBlock: 10.0.4.0/24
       AvailabilityZone: "us-east-1b"
+      
 
   # Public Route Table
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
+      
 
   # Route to Internet Gateway in Public Route Table
   PublicRoute:
@@ -86,6 +98,7 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
+      
 
   # Associate Public Subnet 1 with Public Route Table
   PublicSubnet1RouteTableAssociation:
@@ -93,6 +106,7 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnet1
       RouteTableId: !Ref PublicRouteTable
+      
 
   # Associate Public Subnet 2 with Public Route Table
   PublicSubnet2RouteTableAssociation:
@@ -100,12 +114,14 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnet2
       RouteTableId: !Ref PublicRouteTable
+      
 
   # Private Route Table
   PrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
+      
 
   # Associate Private Subnet 1 with Private Route Table
   PrivateSubnet1RouteTableAssociation:
@@ -113,6 +129,7 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnet1
       RouteTableId: !Ref PrivateRouteTable
+      
 
   # Associate Private Subnet 2 with Private Route Table
   PrivateSubnet2RouteTableAssociation:
@@ -121,23 +138,87 @@ Resources:
       SubnetId: !Ref PrivateSubnet2
       RouteTableId: !Ref PrivateRouteTable
 
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for webvservers
+      VpcId: !Ref VPC
+
+  AnsibleSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for ansible bastion host
+      VpcId: !Ref VPC
+
+
+  EC2toRDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable Egress MySQL access for EC2
+      VpcId: !Ref VPC
+      
+
+  RDSfromEC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable Egress MySQL access for RDS
+      VpcId: !Ref VPC
+      
+
+    
+
 Outputs:
+
   VPCId:
     Description: The ID of the VPC
     Value: !Ref VPC
+    Export:
+      Name: VPCId
 
   PublicSubnetId1:
     Description: The ID of Public Subnet 1
     Value: !Ref PublicSubnet1
+    Export:
+      Name: PublicSubnetId1
 
   PublicSubnetId2:
     Description: The ID of Public Subnet 2
     Value: !Ref PublicSubnet2
+    Export:
+      Name: PublicSubnetId2
 
   PrivateSubnetId1:
     Description: The ID of Private Subnet 1
     Value: !Ref PrivateSubnet1
+    Export:
+      Name: PrivateSubnetId1
 
   PrivateSubnetId2:
     Description: The ID of Private Subnet 2
     Value: !Ref PrivateSubnet2
+    Export:
+      Name: PrivateSubnetId2
+
+  EC2SecurityGroupId:
+    Description: ID for RDS to EC2 Security group (MySQL Ingress)
+    Value: !Ref EC2SecurityGroup
+    Export:
+      Name: EC2SecurityGroupId
+
+  AnsibleSecurityGroupId:
+    Description: ID for RDS to EC2 Security group (MySQL Ingress)
+    Value: !Ref AnsibleSecurityGroup
+    Export:
+      Name: AnsibleSecurityGroupId
+
+  EC2toRDSSecurityGroupId:
+    Description: ID for EC2 to RDS Security group (MySQL Egress)
+    Value: !Ref EC2toRDSSecurityGroup
+    Export:
+      Name: EC2toRDSSecurityGroupId
+
+  RDSfromEC2SecurityGroupId:
+    Description: ID for RDS to EC2 Security group (MySQL Ingress)
+    Value: !Ref RDSfromEC2SecurityGroup
+    Export:
+      Name: RDSfromEC2SecurityGroupId

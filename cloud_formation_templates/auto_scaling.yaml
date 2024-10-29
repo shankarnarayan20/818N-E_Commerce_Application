@@ -5,67 +5,146 @@ Parameters:
   VPCId:
     Type: String
     Description: The VPC ID where the resources will be deployed.
-    Default: vpc-0f688e20beeea151e
 
   PublicSubnetId1:
     Type: String
     Description: The public subnet ID for EC2 instances.
-    Default: subnet-0cc8916a0c9660e27 
   
   PublicSubnetId2:
     Type: String
     Description: The public subnet ID for EC2 instances.
-    Default: subnet-0defe66feecf2c170
-
 
   KeyName:
     Description: Name of an existing EC2 KeyPair
-    Type: AWS::EC2::KeyPair::KeyName
+    Type: String
+    Default: "aws_shank_kp"
 
   InstanceType:
     Description: EC2 instance type
     Type: String
     Default: t2.micro
-  
-  RDSSecurityGroup:
-    Description: RDS Security Group
-    Type: AWS::EC2::SecurityGroup
-    Default: sg-0284bbe2dff6726bd
 
-  # S3BucketName:
-  #   Description: The name of the S3 bucket to be accessed by EC2 instances
-  #   Type: String
+  RDSfromEC2SecurityGroupId:
+    Description: RDS to EC2 Security Group
+    Type: String
+
+  EC2toRDSSecurityGroupId:
+    Description: EC2 to RDS Security Group
+    Type: String
+
+  EC2SecurityGroupId:
+    Description: EC2 Security Group
+    Type: String
+
+  AnsibleSecurityGroupId:
+    Description: Ansible Security Group
+    Type: String
+  
+  AMIId:
+    Description: Base Ubuntu Image for Instances in EC2 instances
+    Type: String
+    Default: "ami-0866a3c8686eaeeba"
+
+  EC2InstanceProfileArn:
+    Description: Instance profile ARN
+    Type: String
+  
+  AnsibleInstanceProfile:
+    Description: SSM role Instance profile ARN for Ansible Instance 
+    Type: String
+
 
 Resources:
 
+  AnsibleSGEgressRule1:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref AnsibleSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      DestinationSecurityGroupId: !Ref EC2SecurityGroupId
 
-  # Security Group for EC2 Instances
-  EC2SecurityGroup:
+  AnsibleSGEgressRule2:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref AnsibleSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      CidrIp: 0.0.0.0/0
+
+  AnsibleSGIngressRule1:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref AnsibleSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: 0.0.0.0/0
+  
+
+  AnsibleInstance:
+   Type: AWS::EC2::Instance
+   Properties:
+    InstanceType: "t2.micro"
+    KeyName: !Ref KeyName
+    ImageId: "ami-0b92721bc8553cdb4"
+    SecurityGroupIds:
+      - !Ref AnsibleSecurityGroupId
+    IamInstanceProfile: !Ref AnsibleInstanceProfile
+    SubnetId: !Ref PublicSubnetId1
+    BlockDeviceMappings:
+    - DeviceName: "/dev/xvda"  # Root volume device name
+      Ebs:
+        VolumeSize: 8           # Size of the root volume in GB
+        Encrypted: true         # Enable encryption for the root volume
+    Tags:
+      - Key: Name
+        Value: Bastion-host
+
+  # Security Group for Load Balancer
+  LoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Enable HTTP and SSH access
+      GroupDescription: Enable HTTPS
       VpcId: !Ref VPCId
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-          CidrIp: 0.0.0.0/0  # Allow HTTP access from anywhere
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0  # Allow SSH access (restrict to specific IPs in production)
+          CidrIp: 0.0.0.0/0  # Allow HTTPS access from anywhere
+      
 
-  EC2RDSSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
+  EC2SGIngressRule1:
+    Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      GroupDescription: Enable Egress MySQL access
-      VpcId: !Ref VPCId
-      SecurityGroupEgress:
-        - IpProtocol: tcp
-          FromPort: 3306
-          ToPort: 3306
-          DestinationSecurityGroupId: !Ref RDSSecurityGroup  # Allow HTTP access from anywhere
+      GroupId: !Ref EC2SecurityGroupId
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
 
+  EC2SGIngressRule2:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref EC2SecurityGroupId
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      SourceSecurityGroupId: !Ref AnsibleSecurityGroupId
+  
+      
+
+  # Adding Rules to EC2 to RDS Security Group for EC2 Instances
+  EC2SGEgressRule1:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref EC2toRDSSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 3306
+      ToPort: 3306
+      DestinationSecurityGroupId: !Ref RDSfromEC2SecurityGroupId 
 
   # Launch Configuration with IAM Role and Security Group
   LaunchTemplate:
@@ -73,26 +152,19 @@ Resources:
     Properties:
       LaunchTemplateName: MyLaunchTemplate
       LaunchTemplateData:
-        ImageId: ami-066e50926fb9d17a7  # Choose an appropriate AMI
+        ImageId: !Ref AMIId  # Choose an appropriate AMI
         InstanceType: !Ref InstanceType
         KeyName: !Ref KeyName
         SecurityGroupIds:
-          - !Ref EC2SecurityGroup
-          - !Ref EC2RDSSecurityGroup
-        IamInstanceProfile:
-          Arn: arn:aws:iam::156041403412:instance-profile/Midterm-ec2-role  # Use the ARN of the existing instance profile
-        UserData:
-          Fn::Base64: |
-            #!/bin/bash
-            cd /var/www/html
-            sudo rm -fr ./*
-            cd ~
-            git clone https://github.com/shankarnarayan20/818N-E_Commerce_Application.git midterm
-            sudo mv midterm/* /var/www/html
-            rm -fr midterm
-            cd /var/www/html
-            export COMPOSER_ALLOW_SUPERUSER=1
-            sudo composer install --no-interaction 
+          - !Ref EC2SecurityGroupId
+          - !Ref EC2toRDSSecurityGroupId
+        IamInstanceProfile: 
+          Arn: !Ref EC2InstanceProfileArn  # Use the ARN of the existing instance profile
+        BlockDeviceMappings:
+        - DeviceName: "/dev/xvda"  # Root volume device name
+          Ebs:
+            VolumeSize: 8           # Size of the root volume in GB
+            Encrypted: true
 
   # Target Group for Load Balancer
   TargetGroup:
@@ -105,6 +177,7 @@ Resources:
       HealthCheckProtocol: HTTPS
       HealthCheckPort: 443
       HealthCheckPath: /
+      
 
   # Load Balancer to distribute traffic
   LoadBalancer:
@@ -114,7 +187,8 @@ Resources:
         - !Ref PublicSubnetId1
         - !Ref PublicSubnetId2
       SecurityGroups:
-        - !Ref EC2SecurityGroup
+        - !Ref LoadBalancerSecurityGroup
+      
 
   # Listener to route traffic to the Target Group
   Listener:
@@ -129,6 +203,7 @@ Resources:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref TargetGroup
+      
 
   # Auto Scaling Group to manage EC2 instances
   AutoScalingGroup:
@@ -146,12 +221,33 @@ Resources:
       TargetGroupARNs:
         - !Ref TargetGroup
 
+
+  # Event bridge to setup new ec2 instances launched by the ASG
+  InstanceLaunchEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: InstanceLaunchEventRule
+      Description: Triggers Lambda function when an EC2 instance launches in a specific Auto Scaling group.
+      EventPattern:
+        source:
+          - aws.autoscaling
+        detail-type:
+          - EC2 Instance Launch Successful
+        detail:
+          AutoScalingGroupName:
+            - !Ref AutoScalingGroup
+      Targets:
+        - Arn: arn:aws:lambda:us-east-1:156041403412:function:Ansible_Instance_Launch
+          Id: LambdaFunctionTarget
+
+
   # CloudWatch Log Group for EC2 Instances
   CloudWatchLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/ec2/ecommerce-application
       RetentionInDays: 7  # Optional: Retain logs for 14 days
+      
 
   # CloudWatch Alarm for High CPU Usage
   HighCPUAlarm:
@@ -164,12 +260,13 @@ Resources:
         - Name: AutoScalingGroupName
           Value: !Ref AutoScalingGroup
       Statistic: Average
-      Period: 300
+      Period: 60
       EvaluationPeriods: 2
-      Threshold: 80
+      Threshold: 70
       ComparisonOperator: GreaterThanThreshold
       AlarmActions:
         - !Ref ScaleUpPolicy
+      
 
   # CloudWatch Alarm for Low CPU Usage
   LowCPUAlarm:
@@ -182,12 +279,13 @@ Resources:
         - Name: AutoScalingGroupName
           Value: !Ref AutoScalingGroup
       Statistic: Average
-      Period: 300
+      Period: 60
       EvaluationPeriods: 2
-      Threshold: 20
+      Threshold: 30
       ComparisonOperator: LessThanThreshold
       AlarmActions:
         - !Ref ScaleDownPolicy
+      
 
   # Step Scaling Policy to Scale Up
   ScaleUpPolicy:
@@ -199,7 +297,8 @@ Resources:
       StepAdjustments:
         - MetricIntervalLowerBound: 0
           ScalingAdjustment: 1
-      Cooldown: 300
+      Cooldown: 60
+      
 
   # Step Scaling Policy to Scale Down
   ScaleDownPolicy:
@@ -211,7 +310,8 @@ Resources:
       StepAdjustments:
         - MetricIntervalUpperBound: 0
           ScalingAdjustment: -1
-      Cooldown: 300
+      Cooldown: 60
+      
 
 Outputs:
   AutoScalingGroupId:

@@ -2,32 +2,33 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: RDS Template for E-commerce Platform
 
 Parameters:
+
   VPCId:
     Type: String
     Description: The VPC ID where RDS will be deployed.
 
-  PrivateSubnetId:
+  PrivateSubnetId1:
     Type: String
-    Description: The private subnet ID for RDS.
+    Description: The private subnet ID for EC2 instances.
 
-  DBUser:
-    Description: The database admin account username
-    Type: String
-    MinLength: 1
-    MaxLength: 16
-    Default: admin
 
-  DBPassword:
-    Description: The database admin account password
+  PrivateSubnetId2:
     Type: String
-    NoEcho: true
-    MinLength: 8
-    MaxLength: 41
+    Description: The private subnet ID for EC2 instances.
 
-  DBName:
-    Description: The database name
+
+  RDSfromEC2SecurityGroupId:
+    Description: RDS to EC2 Security Group
     Type: String
-    Default: ecommerceDB
+
+
+  EC2toRDSSecurityGroupId:
+    Description: EC2 to RDS Security Group
+    Type: String
+
+  RDSMonitoringRoleArn:
+    Description: Arn for Enhanced monitoring Role
+    Type: String
 
   DBInstanceClass:
     Description: The RDS instance type
@@ -35,39 +36,47 @@ Parameters:
     Default: db.t2.micro
 
 Resources:
-  RDSSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
+  
+  SGIngressRule1:
+    Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      GroupDescription: Enable MySQL access
-      VpcId: !Ref VPCId
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 3306
-          ToPort: 3306
-          CidrIp: 0.0.0.0/0
+      GroupId: !Ref RDSfromEC2SecurityGroupId
+      IpProtocol: tcp
+      FromPort: 3306
+      ToPort: 3306
+      SourceSecurityGroupId: !Ref EC2toRDSSecurityGroupId
 
-  RDSInstance:
-    Type: AWS::RDS::DBInstance
-    Properties:
-      AllocatedStorage: 20
-      DBInstanceClass: !Ref DBInstanceClass
-      Engine: MySQL
-      MasterUsername: !Ref DBUser
-      MasterUserPassword: !Ref DBPassword
-      DBName: !Ref DBName
-      MultiAZ: true
-      StorageEncrypted: true
-      BackupRetentionPeriod: 7
-      VPCSecurityGroups:
-        - !Ref RDSSecurityGroup
-      DBSubnetGroupName: !Ref DBSubnetGroup
-
-  DBSubnetGroup:
+  RDSDBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: Subnet group for RDS
       SubnetIds:
-        - !Ref PrivateSubnetId
+        - !Ref PrivateSubnetId1
+        - !Ref PrivateSubnetId2
+
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: database-1
+      DBInstanceClass: db.t3.micro
+      Engine: mysql
+      EngineVersion: 8.0.39
+      DBSubnetGroupName: !Ref RDSDBSubnetGroup
+      VPCSecurityGroups:
+        - !Ref RDSfromEC2SecurityGroupId
+      MultiAZ: true
+      StorageEncrypted: true
+      DBSnapshotIdentifier: mid-term-database-snapshot  # Replace with your snapshot ID
+      AllocatedStorage: "20"
+      StorageType: gp3
+      MonitoringRoleArn: !Ref RDSMonitoringRoleArn
+      MonitoringInterval: 60  # Enable detailed monitoring
+      EnableCloudwatchLogsExports: ["error", "general"]
+      DeletionProtection: false
+      PubliclyAccessible: false
+      BackupRetentionPeriod: 1
+
+  
 
 Outputs:
   RDSInstanceEndpoint:
