@@ -89,7 +89,7 @@ Resources:
    Properties:
     InstanceType: "t2.micro"
     KeyName: !Ref KeyName
-    ImageId: "ami-0b92721bc8553cdb4"
+    ImageId: "ami-0010af63f7fe53464"
     SecurityGroupIds:
       - !Ref AnsibleSecurityGroupId
     IamInstanceProfile: !Ref AnsibleInstanceProfile
@@ -150,7 +150,7 @@ Resources:
   LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
-      LaunchTemplateName: MyLaunchTemplate
+      LaunchTemplateName: MidTermTemplate
       LaunchTemplateData:
         ImageId: !Ref AMIId  # Choose an appropriate AMI
         InstanceType: !Ref InstanceType
@@ -215,30 +215,38 @@ Resources:
       LaunchTemplate:
         LaunchTemplateId: !Ref LaunchTemplate
         Version: !GetAtt LaunchTemplate.LatestVersionNumber
-      MinSize: 1
+      MinSize: 0
       MaxSize: 2
-      DesiredCapacity: 1
+      DesiredCapacity: 0
       TargetGroupARNs:
         - !Ref TargetGroup
 
 
   # Event bridge to setup new ec2 instances launched by the ASG
-  InstanceLaunchEventRule:
-    Type: AWS::Events::Rule
-    Properties:
-      Name: InstanceLaunchEventRule
-      Description: Triggers Lambda function when an EC2 instance launches in a specific Auto Scaling group.
-      EventPattern:
-        source:
-          - aws.autoscaling
-        detail-type:
-          - EC2 Instance Launch Successful
-        detail:
-          AutoScalingGroupName:
-            - !Ref AutoScalingGroup
-      Targets:
-        - Arn: arn:aws:lambda:us-east-1:156041403412:function:Ansible_Instance_Launch
-          Id: LambdaFunctionTarget
+  # InstanceLaunchEventRule:
+  #   Type: AWS::Events::Rule
+  #   Properties:
+  #     Name: InstanceLaunchEventRule
+  #     Description: Triggers Lambda function when an EC2 instance launches in a specific Auto Scaling group.
+  #     EventPattern:
+  #       source:
+  #         - aws.autoscaling
+  #       detail-type:
+  #         - EC2 Instance Launch Successful
+  #       detail:
+  #         AutoScalingGroupName:
+  #           - !Ref AutoScalingGroup
+  #     Targets:
+  #       - Arn: arn:aws:lambda:us-east-1:156041403412:function:Ansible_Instance_Launch
+  #         Id: Ansible_Instance_Launch
+
+  # LambdaInvokePermission:
+  #   Type: AWS::Lambda::Permission
+  #   Properties:
+  #     Action: lambda:InvokeFunction
+  #     FunctionName: Ansible_Instance_Launch
+  #     Principal: events.amazonaws.com
+  #     SourceArn: !GetAtt InstanceLaunchEventRule.Arn
 
 
   # CloudWatch Log Group for EC2 Instances
