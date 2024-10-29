@@ -1,5 +1,4 @@
 <?php 
-    include('../includes/connect.php');
     if(isset($_POST['insert_brand_title'])){
         $brand_title=$_POST['brand_title'];
         $select_query="SELECT * FROM `brands` WHERE brand_title = '$brand_title'";

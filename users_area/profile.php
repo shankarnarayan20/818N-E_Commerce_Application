@@ -137,7 +137,7 @@ if (!isset($_SESSION['username'])) {
                             $row_user_img = mysqli_fetch_array($select_user_img_result);
                             $userImg = $row_user_img['user_image'];
                             echo "                            <li class='nav-item d-flex align-items-center gap-2'>
-                                <img src='./user_images/$userImg' alt='$username photo' class='img-profile img-thumbnail'/>
+                                <img src='" . getUserImageFromS3("user_images/$userImg") . "' alt='$username photo' class='img-profile img-thumbnail'/>
                             </li>";
                             ?>
                             <li class="nav-item d-flex align-items-center gap-2">

@@ -2,7 +2,62 @@
 require __DIR__ . '/../vendor/autoload.php'; // Adjust the path if necessary
 
 use Aws\Sdk;
+use Aws\S3\S3Client;
 use Aws\Exception\AwsException;
+
+
+function uploadToS3($imageType, $s3fileName, $localFileName)
+{
+    $s3Client = new S3Client([
+        'version' => 'latest',
+        'region'  => 'us-east-1'
+    ]);
+
+    $bucket = 'enpm818n-cc-midterm-group14';
+
+    switch ($imageType) {
+        case 'User':
+            $key = 'images/user_images/' . $s3fileName;
+            break;
+        case 'Admin':
+            $key = 'images/admin_images/' . $s3fileName;
+            break;
+        case 'Product':
+        default:
+            $key = 'project-assets/admin/product_images/' . $s3fileName;
+            break;
+    }
+    
+    $s3Client->putObject([
+        'Bucket' => $bucket,
+        'Key' => $key,
+        'SourceFile' => $localFileName
+    ]);
+}
+
+function getUserImageFromS3($filePath) {
+    $s3Client = new S3Client([
+        'version' => 'latest',
+        'region'  => 'us-east-1'
+    ]);
+
+    // Get the object from S3
+    $result = $s3Client->getObject([
+        'Bucket' => 'enpm818n-cc-midterm-group14',
+        'Key' => "images/$filePath"
+    ]);
+
+    // Get the content of the file
+    $imageContent = $result['Body']->getContents();
+
+    // Encode the image content to base64
+    $base64Image = base64_encode($imageContent);
+    // Get the MIME type of the file
+    $mimeType = $result['ContentType'];
+
+    // Return the base64 encoded image with MIME type
+    return "data:$mimeType;base64,$base64Image";
+}
 
 // Function to create a database connection
 function createDatabaseConnection()

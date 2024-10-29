@@ -21,8 +21,8 @@ if (isset($_SESSION['admin_username'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ecommerce Admin Dashboard</title>
     <?php global $cdn_url; ?>
-    <link rel="stylesheet" href="https://d2jum7a74lodww.cloudfront.net/assets/css/bootstrap.css">
-    <link rel="stylesheet" href="https://d2jum7a74lodww.cloudfront.net/assets/css/main.css">
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/bootstrap.css"; ?> />
+    <link rel="stylesheet" href=<?php echo "$cdn_url/assets/css/main.css"; ?> />
 </head>
 
 <body>
@@ -67,7 +67,7 @@ if (isset($_SESSION['admin_username'])) {
             <div class="row align-items-center">
                 <div class="col-md-2">
                     <div class="admin-image">
-                        <a href="./index.php"><img src="./admin_images/<?php echo $admin_image; ?>" class="img-thumbnail" alt="Admin Photo"></a>
+                        <a href="./index.php"><img src="<?php echo getUserImageFromS3("admin_images/$admin_image") ?>" class="img-thumbnail" alt="Admin Photo"></a>
                         <p><?php echo $admin_name; ?></p>
                     </div>
                 </div>

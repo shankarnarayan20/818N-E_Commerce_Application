@@ -98,7 +98,7 @@ if (isset($_POST['admin_register'])) {
         echo "<script>window.alert('Passwords are not match');</script>";
     } else {
         // insert query
-        move_uploaded_file($image_tmp, "./admin_images/$image");
+        uploadToS3("Admin", $image, $image_tmp);
         $insert_query = "INSERT INTO `admin_table` (admin_name,admin_email,admin_image,admin_password) VALUES ('$username','$email','$image','$hash_password')";
         $insert_result = mysqli_query($con, $insert_query);
         if ($insert_result) {

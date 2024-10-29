@@ -1,5 +1,4 @@
 <?php
-include('../includes/connect.php');
 if (isset($_POST['insert_categ_title'])) {
     $category_title = $_POST['categ_title'];
     $select_query = "SELECT * FROM `categories` WHERE category_title = '$category_title'";
